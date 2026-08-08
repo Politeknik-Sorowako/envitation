@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$SCRIPT_DIR/src/backend-sqlite"
 FRONTEND_DIR="$SCRIPT_DIR/src"
-PORT=${1:-3000}
+PORT=${1:-3001}
 FRONTEND_PORT=${2:-8081}
 
 echo "========================================="

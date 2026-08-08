@@ -1,6 +1,6 @@
 # ENVITATION - Sistem Undangan Resmi, RSVP & Buku Tamu Digital
 
-Aplikasi web modular berbasis **Google Sheets** sebagai database untuk manajemen undangan, RSVP, dan pencatatan kehadiran tamu dengan QR Code.
+Aplikasi web modular untuk manajemen undangan, RSVP, dan pencatatan kehadiran tamu dengan QR Code. Mendukung **Google Sheets** atau **SQLite** sebagai database.
 
 ---
 
@@ -15,6 +15,7 @@ Aplikasi web modular berbasis **Google Sheets** sebagai database untuk manajemen
 - **Tambah Tamu On-the-Spot** dari panel admin
 - **Dashboard Real-time**: statistik RSVP, check-in, lokasi
 - **In/Out Logic**: tracking tamu di dalam/keluar ruangan tanpa duplikasi check-in
+- **Dual Backend**: Google Sheets (cloud) atau SQLite (lokal/offline)
 
 ---
 
@@ -24,9 +25,17 @@ Aplikasi web modular berbasis **Google Sheets** sebagai database untuk manajemen
 envitation/
 ├── src/
 │   ├── config/
-│   │   └── config.js              # Konfigurasi terpusat (event, warna, API URL)
+│   │   └── config.js              # Konfigurasi terpusat (event, warna, backend selection)
 │   ├── backend/
 │   │   └── Code.gs                # Google Apps Script (REST API)
+│   ├── backend-sqlite/
+│   │   ├── server.js              # Express server
+│   │   ├── database.js            # DB init & query helpers
+│   │   ├── routes.js              # API endpoints
+│   │   ├── import.js              # CSV/JSON import CLI
+│   │   ├── package.json           # Dependencies
+│   │   ├── .env.example           # Template konfigurasi
+│   │   └── .gitignore             # Ignore *.db, node_modules
 │   └── frontend/
 │       ├── index.html             # Undangan Digital + RSVP
 │       ├── admin.html             # Panel Admin/Resepsionis
@@ -34,13 +43,32 @@ envitation/
 │       ├── css/
 │       │   └── style.css          # Custom styles
 │       └── js/
-│           ├── api.js             # API client
+│           ├── api.js             # API client (dynamic backend selection)
 │           ├── rsvp.js            # RSVP logic
 │           ├── admin.js           # Admin panel logic
 │           └── utils.js           # Helper functions
-├── README.md                      # Dokumentasi ini
-└── setup-guide.md                 # Panduan setup Google Sheets
+── dev.sh                         # Development server (GAS mode)
+├── dev-sqlite.sh                  # Development server (SQLite mode)
+├── .gitignore                     # Ignore SQLite files
+└── README.md                      # Dokumentasi ini
 ```
+
+---
+
+## Pilihan Backend
+
+ENVITATION mendukung 2 jenis backend. Pilih sesuai kebutuhan:
+
+| Fitur | Google Sheets | SQLite |
+|-------|--------------|--------|
+| **Setup** | Medium (Google deploy) | Low (`npm install`) |
+| **Portability** | Cloud-only | Single `.db` file |
+| **Offline** | Tidak | Ya |
+| **Multi-device sync** | Otomatis | Manual copy `.db` |
+| **Concurrent scans** | Ya | Ya (async sqlite3) |
+| **Performa** | ~500ms/request | ~5ms/request |
+| **Backup** | Google auto-backup | Manual copy `.db` |
+| **Best untuk** | Multi-admin, remote | Single lokasi, offline |
 
 ---
 
@@ -80,33 +108,124 @@ envitation/
 
 ### 4. Konfigurasi Frontend
 1. Buka `src/config/config.js`
-2. Update `API.baseUrl` dengan Web App URL dari langkah 3
-3. Update `ADMIN.pin` sesuai PIN yang Anda set di Code.gs
-4. Update parameter `EVENT` sesuai kegiatan Anda
+2. Set `CONFIG.BACKEND.type = "gas"`
+3. Update `CONFIG.BACKEND.gas.url` dengan Web App URL dari langkah 3
+4. Update `ADMIN.pin` sesuai PIN yang Anda set di Code.gs
+5. Update parameter `EVENT` sesuai kegiatan Anda
 
-### 5. Deploy Frontend
-Pilih salah satu:
-
-**Opsi A: Static Hosting (GitHub Pages / Vercel / Netlify)**
+### 5. Jalankan Development Server
 ```bash
-# Copy semua file dari src/frontend/ ke hosting Anda
-# Pastikan struktur folder css/ dan js/ tetap sama
+./dev.sh
+```
+Atau manual:
+```bash
+cd src
+python3 -m http.server 8081
+# Buka http://localhost:8081/frontend/index.html
 ```
 
-**Opsi B: Local Testing**
+---
+
+## Setup SQLite Backend
+
+### 1. Install Dependencies
 ```bash
-# Gunakan simple HTTP server
-cd src/frontend
-python -m http.server 8080
-# Buka http://localhost:8080
+cd src/backend-sqlite
+npm install
 ```
+
+### 2. Setup Konfigurasi
+```bash
+cp .env.example .env
+# Edit .env sesuai kebutuhan:
+#   ADMIN_PIN=202608
+#   SQLITE_DB_PATH=./data/envitation.db
+#   PORT=3000
+```
+
+### 3. Import Data (Opsional)
+Jika sudah punya data dari Google Sheets atau file lain:
+
+```bash
+# Import dari CSV (export dari Google Sheets)
+node import.js --csv data.csv
+
+# Import dari JSON
+node import.js --json data.json
+
+# Custom database path
+node import.js --csv data.csv --db ./custom/path.db
+```
+
+**Format CSV yang diharapkan:**
+```csv
+id_tamu,nama_tamu,instansi_kategori,no_hp,email,status_rsvp,jumlah_pendamping,qr_code_hash,status_kehadiran,status_lokasi,waktu_checkin,komentar_rsvp,catatan_admin
+TMU001,Budi Santoso,VIP,081234567890,budi@email.com,Belum Konfirmasi,0,,Belum Hadir,Di Luar,,,
+```
+
+**Format JSON yang diharapkan:**
+```json
+[
+  {
+    "id_tamu": "TMU001",
+    "nama_tamu": "Budi Santoso",
+    "instansi_kategori": "VIP",
+    ...
+  }
+]
+```
+
+Catatan: `qr_code_hash` akan auto-generate jika kosong.
+
+### 4. Konfigurasi Frontend
+1. Buka `src/config/config.js`
+2. Set `CONFIG.BACKEND.type = "sqlite"`
+3. Update `CONFIG.BACKEND.sqlite.url` jika port berbeda dari default (3000)
+4. Update `ADMIN.pin` sesuai PIN di `.env`
+5. Update parameter `EVENT` sesuai kegiatan Anda
+
+### 5. Jalankan Development Server
+```bash
+./dev-sqlite.sh
+```
+
+Script akan otomatis:
+- Install dependencies jika belum ada
+- Copy `.env.example` → `.env` jika belum ada
+- Start backend di port 3000
+- Start frontend di port 8081
+
+Akses:
+- **Invitation**: http://localhost:8081/frontend/index.html
+- **Admin**: http://localhost:8081/frontend/admin.html
+- **E-Card**: http://localhost:8081/frontend/ecard.html
+- **Backend API**: http://localhost:3000
+
+---
+
+## Switching Backend
+
+Untuk berpindah antara Google Sheets dan SQLite:
+
+1. Edit `src/config/config.js`:
+   ```javascript
+   // Untuk Google Sheets:
+   CONFIG.BACKEND.type = "gas";
+
+   // Untuk SQLite:
+   CONFIG.BACKEND.type = "sqlite";
+   ```
+
+2. Restart development server
+
+Frontend tidak perlu diubah — API client otomatis membaca konfigurasi backend.
 
 ---
 
 ## Cara Menggunakan
 
 ### Untuk Tamu
-1. Buka link undangan: `https://your-domain.com/index.html?id=TMU001`
+1. Buka link undangan: `https://your-domain.com/frontend/index.html?id=TMU001`
 2. Atau masukkan Nama + No HP untuk verifikasi
 3. Pilih status RSVP: Hadir / Tentatif / Tidak Hadir
 4. Isi jumlah pendamping (jika hadir) dan komentar (opsional)
@@ -114,7 +233,7 @@ python -m http.server 8080
 6. Download E-Card sebagai PNG atau PDF
 
 ### Untuk Panitia (Admin)
-1. Buka `https://your-domain.com/admin.html`
+1. Buka `https://your-domain.com/frontend/admin.html`
 2. Masukkan PIN admin (default: `202608`)
 3. **Dashboard**: Lihat statistik real-time
 4. **Scan QR**:
@@ -157,11 +276,17 @@ const CONFIG = {
   ADMIN: {
     pin: "PIN_BARU",
   },
+  BACKEND: {
+    type: "gas", // atau "sqlite"
+    // ...
+  },
   // ... sisanya tetap sama
 };
 ```
 
-Untuk database, buat sheet baru atau reset sheet `Data_Tamu` (hapus data, sisakan header).
+**Untuk Google Sheets**: Buat sheet baru atau reset sheet `Data_Tamu` (hapus data, sisakan header).
+
+**Untuk SQLite**: Hapus file `.db` lama, import data baru dengan `import.js`.
 
 ---
 
@@ -173,8 +298,9 @@ Untuk database, buat sheet baru atau reset sheet `Data_Tamu` (hapus data, sisaka
 | QR Scanner | html5-qrcode |
 | QR Generator | qrcode.js |
 | E-Card Export | html2canvas + jsPDF |
-| Backend | Google Apps Script |
-| Database | Google Sheets |
+| Backend (GAS) | Google Apps Script |
+| Backend (SQLite) | Node.js + Express + sqlite3 |
+| Database | Google Sheets / SQLite |
 | Fonts | Playfair Display + Inter (Google Fonts) |
 
 ---
@@ -183,11 +309,42 @@ Untuk database, buat sheet baru atau reset sheet `Data_Tamu` (hapus data, sisaka
 
 | Masalah | Solusi |
 |---------|--------|
-| "Koneksi gagal" | Periksa Web App URL di config.js, pastikan GAS deployed sebagai "Anyone" |
+| "Koneksi gagal" (GAS) | Periksa Web App URL di config.js, pastikan GAS deployed sebagai "Anyone" |
+| "Koneksi gagal" (SQLite) | Pastikan backend server berjalan (`./dev-sqlite.sh`) |
 | QR Scanner tidak jalan | Pastikan HTTPS atau localhost, browser mengizinkan akses kamera |
-| "Tamu tidak ditemukan" | Pastikan ID/nama/no_hp sesuai data di sheet |
-| CORS error | GAS Web App otomatis handle CORS, pastikan URL benar |
-| PIN admin salah | Cek `ADMIN_PIN` di Code.gs dan `ADMIN.pin` di config.js |
+| "Tamu tidak ditemukan" | Pastikan ID/nama/no_hp sesuai data di database |
+| CORS error (GAS) | GAS Web App otomatis handle CORS, pastikan URL benar |
+| CORS error (SQLite) | CORS sudah enabled di server.js |
+| PIN admin salah | Cek `ADMIN_PIN` di Code.gs atau `.env` dan `ADMIN.pin` di config.js |
+| Port 3000 sudah dipakai | Ubah `PORT` di `.env` atau jalankan `./dev-sqlite.sh 3001` |
+| Database locked (SQLite) | Pastikan tidak ada proses lain yang mengakses `.db` file |
+
+---
+
+## Migrasi Google Sheets → SQLite
+
+1. **Export data dari Google Sheets:**
+   - File → Download → CSV
+
+2. **Setup SQLite backend:**
+   ```bash
+   cd src/backend-sqlite
+   npm install
+   cp .env.example .env
+   ```
+
+3. **Import data:**
+   ```bash
+   node import.js --csv ../exports/data.csv
+   ```
+
+4. **Switch config:**
+   - Edit `src/config/config.js`: `type: "gas"` → `type: "sqlite"`
+
+5. **Start:**
+   ```bash
+   ./dev-sqlite.sh
+   ```
 
 ---
 

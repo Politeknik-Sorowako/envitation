@@ -286,6 +286,192 @@ const Admin = {
     document.getElementById("add-email").value = "";
   },
 
+  showImportForm() {
+    document.getElementById("import-form").classList.remove("hidden");
+    document.getElementById("import-file").value = "";
+    document.getElementById("import-preview").classList.add("hidden");
+    document.getElementById("import-progress").classList.add("hidden");
+    document.getElementById("import-result").classList.add("hidden");
+    document.getElementById("btn-import").disabled = true;
+  },
+
+  hideImportForm() {
+    document.getElementById("import-form").classList.add("hidden");
+  },
+
+  importRecords: [],
+
+  previewImportFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    reader.onload = (e) => {
+      try {
+        if (ext === 'csv') {
+          this.importRecords = this.parseCSV(e.target.result);
+        } else if (ext === 'json') {
+          this.importRecords = this.parseJSON(e.target.result);
+        } else {
+          Utils.showToast("Format file tidak didukung. Gunakan CSV atau JSON.", "error");
+          return;
+        }
+
+        document.getElementById("import-file-name").textContent = file.name;
+        document.getElementById("import-record-count").textContent = this.importRecords.length;
+        document.getElementById("import-preview").classList.remove("hidden");
+        document.getElementById("btn-import").disabled = this.importRecords.length === 0;
+      } catch (err) {
+        Utils.showToast("Gagal membaca file: " + err.message, "error");
+      }
+    };
+
+    reader.readAsText(file);
+  },
+
+  parseCSV(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+
+    const headers = this.parseCSVLine(lines[0]);
+    const records = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = this.parseCSVLine(lines[i]);
+      const record = {};
+      headers.forEach((header, idx) => {
+        record[header.trim()] = values[idx] || '';
+      });
+      records.push(record);
+    }
+
+    return records;
+  },
+
+  parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  },
+
+  parseJSON(text) {
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) {
+      throw new Error("JSON harus berupa array of objects");
+    }
+    return data;
+  },
+
+  async importGuests() {
+    if (this.importRecords.length === 0) {
+      Utils.showToast("Tidak ada data untuk diimport", "warning");
+      return;
+    }
+
+    const btn = document.getElementById("btn-import");
+    btn.disabled = true;
+    btn.textContent = "Mengimport...";
+
+    const progressDiv = document.getElementById("import-progress");
+    const progressBar = document.getElementById("import-progress-bar");
+    const progressText = document.getElementById("import-progress-text");
+    const resultDiv = document.getElementById("import-result");
+
+    progressDiv.classList.remove("hidden");
+    resultDiv.classList.add("hidden");
+
+    let inserted = 0;
+    let skipped = 0;
+    let errors = 0;
+    const total = this.importRecords.length;
+
+    for (let i = 0; i < total; i++) {
+      const rec = this.importRecords[i];
+      const nama = rec.nama_tamu || rec.NAMA_TAMU || rec.nama || '';
+
+      if (!nama) {
+        skipped++;
+        continue;
+      }
+
+      const progress = Math.round(((i + 1) / total) * 100);
+      progressBar.style.width = `${progress}%`;
+      progressText.textContent = `${i + 1}/${total}`;
+
+      try {
+        const result = await API.importGuest(
+          CONFIG.ADMIN.pin,
+          nama,
+          rec.instansi_kategori || rec.INSTANSI_KATEGORI || rec.kategori || 'Undangan Umum',
+          rec.no_hp || rec.NO_HP || rec.hp || '',
+          rec.email || rec.EMAIL || '',
+          rec.status_rsvp || rec.STATUS_RSVP || 'Belum Konfirmasi',
+          parseInt(rec.jumlah_pendamping || rec.JUMLAH_PENDAMPING || rec.pendamping || 0) || 0,
+          rec.qr_code_hash || rec.QR_CODE_HASH || '',
+          rec.status_kehadiran || rec.STATUS_KEHADIRAN || 'Belum Hadir',
+          rec.status_lokasi || rec.STATUS_LOKASI || 'Di Luar',
+          rec.waktu_checkin || rec.WAKTU_CHECKIN || '',
+          rec.komentar_rsvp || rec.KOMENTAR_RSVP || rec.komentar || '',
+          rec.catatan_admin || rec.CATATAN_ADMIN || rec.catatan || '',
+        );
+
+        if (result.success) {
+          inserted++;
+        } else if (result.skipped) {
+          skipped++;
+        } else {
+          errors++;
+        }
+      } catch (err) {
+        errors++;
+      }
+    }
+
+    progressDiv.classList.add("hidden");
+
+    const resultClass = errors > 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800';
+    resultDiv.className = `mb-4 p-3 rounded-lg border ${resultClass}`;
+    resultDiv.innerHTML = `
+      <p class="font-semibold mb-2">Import Selesai!</p>
+      <div class="grid grid-cols-3 gap-2 text-sm">
+        <div><span class="font-bold">${inserted}</span> berhasil</div>
+        <div><span class="font-bold">${skipped}</span> dilewati</div>
+        <div><span class="font-bold">${errors}</span> error</div>
+      </div>
+    `;
+    resultDiv.classList.remove("hidden");
+
+    btn.disabled = false;
+    btn.textContent = "Import Data";
+
+    if (inserted > 0) {
+      Utils.showToast(`${inserted} tamu berhasil diimport!`, "success");
+      await this.loadStats();
+      await this.loadGuests();
+    }
+  },
+
   async addGuest() {
     const nama = document.getElementById("add-nama").value.trim();
     const instansi = document.getElementById("add-kategori").value;

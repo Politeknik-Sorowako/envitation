@@ -160,4 +160,22 @@ const API = {
   verifyAdmin(pin) {
     return this.call("verifyAdmin", { pin: pin });
   },
+
+  importGuest(pin, nama, instansi, noHp, email, statusRsvp, jumlahPendamping, qrHash, statusKehadiran, statusLokasi, waktuCheckin, komentar, catatan) {
+    return this.post("importGuest", {
+      pin: pin,
+      nama_tamu: nama,
+      instansi_kategori: instansi,
+      no_hp: noHp,
+      email: email,
+      status_rsvp: statusRsvp,
+      jumlah_pendamping: jumlahPendamping,
+      qr_code_hash: qrHash,
+      status_kehadiran: statusKehadiran,
+      status_lokasi: statusLokasi,
+      waktu_checkin: waktuCheckin,
+      komentar_rsvp: komentar,
+      catatan_admin: catatan,
+    });
+  },
 };

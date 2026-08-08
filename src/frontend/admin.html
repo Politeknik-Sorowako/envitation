@@ -192,10 +192,14 @@
         </div>
 
         <!-- Add Guest Button -->
-        <div class="mb-4">
+        <div class="flex gap-2 mb-4 flex-wrap">
           <button class="btn btn-accent" onclick="Admin.showAddGuestForm()">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             Tambah Tamu On-the-Spot
+          </button>
+          <button class="btn btn-primary" onclick="Admin.showImportForm()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            Import Data Tamu
           </button>
         </div>
 
@@ -229,6 +233,42 @@
           <div class="flex gap-2 mt-4">
             <button class="btn btn-accent" onclick="Admin.addGuest()">Tambah Tamu</button>
             <button class="btn btn-outline" onclick="Admin.hideAddGuestForm()">Batal</button>
+          </div>
+        </div>
+
+        <!-- Import Form (hidden) -->
+        <div id="import-form" class="hidden bg-white p-4 rounded-xl shadow-sm mb-4">
+          <h3 class="font-semibold mb-3">Import Data Tamu</h3>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
+            <p class="font-medium text-amber-800 mb-1">Format File yang Didukung:</p>
+            <ul class="text-amber-700 space-y-1 text-xs">
+              <li><strong>CSV:</strong> Kolom: id_tamu, nama_tamu, instansi_kategori, no_hp, email, status_rsvp, jumlah_pendamping, qr_code_hash, status_kehadiran, status_lokasi, waktu_checkin, komentar_rsvp, catatan_admin</li>
+              <li><strong>JSON:</strong> Array of objects dengan field yang sama</li>
+            </ul>
+            <p class="text-amber-600 text-xs mt-2">QR Hash akan auto-generate jika kosong. Data duplikat (berdasarkan id_tamu) akan dilewati.</p>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Pilih File *</label>
+            <input type="file" id="import-file" class="form-input" accept=".csv,.json" onchange="Admin.previewImportFile(this)">
+          </div>
+          <div id="import-preview" class="hidden mb-4">
+            <p class="text-sm text-slate-600 mb-2">Preview: <span id="import-file-name" class="font-medium"></span> (<span id="import-record-count">0</span> records)</p>
+          </div>
+          <div id="import-progress" class="hidden mb-4">
+            <div class="flex justify-between text-sm mb-1">
+              <span>Importing...</span>
+              <span id="import-progress-text">0/0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="import-progress-bar" class="progress-fill bg-amber-500" style="width: 0%"></div>
+            </div>
+          </div>
+          <div id="import-result" class="hidden mb-4 p-3 rounded-lg"></div>
+          <div class="flex gap-2">
+            <button id="btn-import" class="btn btn-primary" onclick="Admin.importGuests()" disabled>
+              Import Data
+            </button>
+            <button class="btn btn-outline" onclick="Admin.hideImportForm()">Batal</button>
           </div>
         </div>
 

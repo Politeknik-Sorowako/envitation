@@ -45,6 +45,9 @@ function handleRequest(e) {
       case "addGuest":
         result = addGuest(params);
         break;
+      case "importGuest":
+        result = importGuest(params);
+        break;
       case "getGuest":
         result = getGuest(params);
         break;
@@ -439,6 +442,67 @@ function addGuest(params) {
       waktu_checkin: "",
       komentar_rsvp: "",
       catatan_admin: "Tambahan on-the-spot",
+    },
+  };
+}
+
+function importGuest(params) {
+  const pin = params.pin;
+  if (pin !== ADMIN_PIN) {
+    return { success: false, message: "PIN admin tidak valid." };
+  }
+
+  const nama = params.nama_tamu;
+  if (!nama) {
+    return { success: false, message: "Nama tamu wajib diisi." };
+  }
+
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  const existingIdTamu = params.id_tamu || "";
+
+  for (let i = 1; i < data.length; i++) {
+    if (existingIdTamu && data[i][0] === existingIdTamu) {
+      return { success: false, message: 'Tamu "' + nama + '" (' + existingIdTamu + ') sudah ada.', skipped: true };
+    }
+  }
+
+  const idTamu = existingIdTamu || generateIdTamu();
+  const qrHash = params.qr_code_hash || generateQRHash();
+
+  sheet.appendRow([
+    idTamu,
+    nama,
+    params.instansi_kategori || "Undangan Umum",
+    params.no_hp || "",
+    params.email || "",
+    params.status_rsvp || "Belum Konfirmasi",
+    parseInt(params.jumlah_pendamping) || 0,
+    qrHash,
+    params.status_kehadiran || "Belum Hadir",
+    params.status_lokasi || "Di Luar",
+    params.waktu_checkin || "",
+    params.komentar_rsvp || "",
+    params.catatan_admin || "",
+  ]);
+
+  return {
+    success: true,
+    message: 'Tamu "' + nama + '" berhasil diimport.',
+    guest: {
+      id_tamu: idTamu,
+      nama_tamu: nama,
+      instansi_kategori: params.instansi_kategori || "Undangan Umum",
+      no_hp: params.no_hp || "",
+      email: params.email || "",
+      status_rsvp: params.status_rsvp || "Belum Konfirmasi",
+      jumlah_pendamping: parseInt(params.jumlah_pendamping) || 0,
+      qr_code_hash: qrHash,
+      status_kehadiran: params.status_kehadiran || "Belum Hadir",
+      status_lokasi: params.status_lokasi || "Di Luar",
+      waktu_checkin: params.waktu_checkin || "",
+      komentar_rsvp: params.komentar_rsvp || "",
+      catatan_admin: params.catatan_admin || "",
     },
   };
 }

@@ -217,6 +217,56 @@ async function addGuest(db, params, adminPin) {
   };
 }
 
+async function importGuest(db, params, adminPin) {
+  const pin = params.pin;
+  if (pin !== adminPin) {
+    return { success: false, message: 'PIN admin tidak valid.' };
+  }
+
+  const nama = params.nama_tamu;
+  if (!nama) {
+    return { success: false, message: 'Nama tamu wajib diisi.' };
+  }
+
+  const existingIdTamu = params.id_tamu || '';
+  const existing = existingIdTamu ? await get(db, 'SELECT id FROM data_tamu WHERE id_tamu = ?', [existingIdTamu]) : null;
+
+  if (existing) {
+    return { success: false, message: `Tamu "${nama}" (${existingIdTamu}) sudah ada.`, skipped: true };
+  }
+
+  const idTamu = existingIdTamu || await generateIdTamu(db);
+  const qrHash = params.qr_code_hash || generateQRHash();
+
+  await run(db, `INSERT INTO data_tamu (
+    id_tamu, nama_tamu, instansi_kategori, no_hp, email,
+    status_rsvp, jumlah_pendamping, qr_code_hash,
+    status_kehadiran, status_lokasi, waktu_checkin,
+    komentar_rsvp, catatan_admin
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+    idTamu,
+    nama,
+    params.instansi_kategori || 'Undangan Umum',
+    params.no_hp || '',
+    params.email || '',
+    params.status_rsvp || 'Belum Konfirmasi',
+    parseInt(params.jumlah_pendamping) || 0,
+    qrHash,
+    params.status_kehadiran || 'Belum Hadir',
+    params.status_lokasi || 'Di Luar',
+    params.waktu_checkin || '',
+    params.komentar_rsvp || '',
+    params.catatan_admin || '',
+  ]);
+
+  const guest = await get(db, 'SELECT * FROM data_tamu WHERE id_tamu = ?', [idTamu]);
+  return {
+    success: true,
+    message: `Tamu "${nama}" berhasil diimport.`,
+    guest: formatGuestRow(guest),
+  };
+}
+
 async function getGuest(db, params) {
   const idTamu = params.id_tamu;
   const qrHash = params.qr_hash;
@@ -330,6 +380,9 @@ async function handlePostRequest(req, res, db, ADMIN_PIN) {
         break;
       case 'addGuest':
         result = await addGuest(db, req.body, ADMIN_PIN);
+        break;
+      case 'importGuest':
+        result = await importGuest(db, req.body, ADMIN_PIN);
         break;
       case 'updateAdminNote':
         result = await updateAdminNote(db, req.body, ADMIN_PIN);

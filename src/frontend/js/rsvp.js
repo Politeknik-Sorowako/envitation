@@ -184,11 +184,11 @@ const RSVP = {
     qrContainer.innerHTML = "";
     new QRCode(qrContainer, {
       text: this.guest.qr_code_hash,
-      width: 180,
-      height: 180,
-      colorDark: "#0f172a",
+      width: 256,
+      height: 256,
+      colorDark: "#000000",
       colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.M,
+      correctLevel: QRCode.CorrectLevel.H,
     });
 
     document.getElementById("ecard-section").scrollIntoView({ behavior: "smooth" });

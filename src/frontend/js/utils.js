@@ -128,13 +128,14 @@ const Utils = {
     if (!element) return;
 
     html2canvas(element, {
-      scale: 2,
+      scale: 3,
       backgroundColor: "#ffffff",
       useCORS: true,
+      imageSmoothingEnabled: false,
     }).then(canvas => {
       const link = document.createElement("a");
       link.download = `${filename}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = canvas.toDataURL("image/png", 1.0);
       link.click();
       this.showToast("E-Card berhasil diunduh!", "success");
     });
@@ -145,11 +146,12 @@ const Utils = {
     if (!element) return;
 
     html2canvas(element, {
-      scale: 2,
+      scale: 3,
       backgroundColor: "#ffffff",
       useCORS: true,
+      imageSmoothingEnabled: false,
     }).then(canvas => {
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jspdf.jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -159,7 +161,7 @@ const Utils = {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
       pdf.save(`${filename}.pdf`);
       this.showToast("E-Card PDF berhasil diunduh!", "success");
     });

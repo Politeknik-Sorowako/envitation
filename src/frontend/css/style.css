@@ -182,12 +182,23 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ecard-qr {
-  width: 200px;
-  height: 200px;
+  width: 256px;
+  height: 256px;
   margin: 1rem auto;
   background: white;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ecard-qr canvas,
+.ecard-qr img {
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 /* Scanner Styles */

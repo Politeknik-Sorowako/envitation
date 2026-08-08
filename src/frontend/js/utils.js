@@ -123,119 +123,130 @@ const Utils = {
     });
   },
 
-  darkenForExport(element) {
-    this._exportState = { text: [], qr: [], logo: null };
+  _cloneForExport(elementId) {
+    const original = document.getElementById(elementId);
+    if (!original) return null;
 
-    element.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300, .text-slate-600, #ec-guest-name").forEach(el => {
-      this._exportState.text.push({ el, color: el.style.color, opacity: el.style.opacity });
-      el.style.setProperty("color", "#0f172a", "important");
-      el.style.setProperty("opacity", "1", "important");
+    const clone = original.cloneNode(true);
+    clone.style.position = "absolute";
+    clone.style.left = "-9999px";
+    clone.style.top = "0";
+    clone.style.zIndex = "-1";
+    clone.style.opacity = "1";
+    clone.style.animation = "none";
+    document.body.appendChild(clone);
+
+    const textEls = clone.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300, .text-slate-600, #ec-guest-name");
+    textEls.forEach(el => {
+      el.style.color = "#0f172a";
+      el.style.opacity = "1";
     });
 
-    const qrCanvas = element.querySelector("#ec-qr-code canvas");
+    const qrCanvas = clone.querySelector("#ec-qr-code canvas");
     if (qrCanvas) {
-      const qrImgEl = document.createElement("img");
-      qrImgEl.src = qrCanvas.toDataURL("image/png");
-      qrImgEl.style.cssText = "width:100% !important;height:100% !important;display:block;";
-      qrCanvas.style.visibility = "hidden";
-      qrCanvas.parentNode.insertBefore(qrImgEl, qrCanvas);
-      this._exportState.qr.push({ canvas: qrCanvas, img: qrImgEl });
+      const qrImg = document.createElement("img");
+      qrImg.src = qrCanvas.toDataURL("image/png");
+      qrImg.style.cssText = "width:100%;height:100%;display:block;";
+      qrCanvas.parentNode.replaceChild(qrImg, qrCanvas);
     }
 
-    const logoEl = element.querySelector(".ecard-logo");
+    const logoEl = clone.querySelector(".ecard-logo");
     if (logoEl) {
-      this._exportState.logo = { el: logoEl, filter: logoEl.style.filter, animation: logoEl.style.animation };
       logoEl.style.filter = "none";
       logoEl.style.animation = "none";
     }
+
+    return clone;
   },
 
-  restoreAfterExport() {
-    if (this._exportState) {
-      this._exportState.text.forEach(({ el, color, opacity }) => {
-        el.style.color = color;
-        el.style.opacity = opacity;
-      });
-      this._exportState.qr.forEach(({ canvas, img }) => {
-        img.remove();
-        canvas.style.visibility = "";
-      });
-      if (this._exportState.logo) {
-        const { el, filter, animation } = this._exportState.logo;
-        el.style.filter = filter;
-        el.style.animation = animation;
+  _captureOptions() {
+    return {
+      scale: 4,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      allowTaint: true,
+      imageSmoothingEnabled: false,
+      logging: false,
+    };
+  },
+
+  _captureFallback(elementId, filename, format) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    html2canvas(element, this._captureOptions()).then(canvas => {
+      if (format === "png") {
+        this._savePNG(canvas, filename);
+        this.showToast("E-Card berhasil diunduh (mode fallback)!", "success");
+      } else {
+        this._savePDF(canvas, filename);
+        this.showToast("E-Card PDF berhasil diunduh (mode fallback)!", "success");
       }
-      this._exportState = null;
-    }
+    }).catch(() => {
+      this.showToast("Gagal mengunduh E-Card", "error");
+    });
+  },
+
+  _savePNG(canvas, filename) {
+    const link = document.createElement("a");
+    link.download = `${filename}.png`;
+    link.href = canvas.toDataURL("image/png", 1.0);
+    link.click();
+  },
+
+  _savePDF(canvas, filename) {
+    const imgData = canvas.toDataURL("image/png", 1.0);
+    const pdf = new jspdf.jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [105, 148],
+    });
+
+    const maxWidth = 105;
+    const maxHeight = 148;
+    const dpi = 96;
+    const imgWidth = (canvas.width * 25.4) / dpi;
+    const imgHeight = (canvas.height * 25.4) / dpi;
+    const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
+    const finalWidth = imgWidth * scale;
+    const finalHeight = imgHeight * scale;
+
+    pdf.addImage(imgData, "PNG", (maxWidth - finalWidth) / 2, (maxHeight - finalHeight) / 2, finalWidth, finalHeight, undefined, "FAST");
+    pdf.save(`${filename}.pdf`);
   },
 
   async downloadAsPNG(elementId, filename = "ecard") {
-    const element = document.getElementById(elementId);
-    if (!element) return;
+    const clone = this._cloneForExport(elementId);
+    if (!clone) return;
 
-    this.darkenForExport(element);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 500));
 
-    html2canvas(element, {
-      scale: 4,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-      allowTaint: true,
-      imageSmoothingEnabled: false,
-      logging: false,
-    }).then(canvas => {
-      this.restoreAfterExport();
-      const link = document.createElement("a");
-      link.download = `${filename}.png`;
-      link.href = canvas.toDataURL("image/png", 1.0);
-      link.click();
+    try {
+      const canvas = await html2canvas(clone, this._captureOptions());
+      clone.remove();
+      this._savePNG(canvas, filename);
       this.showToast("E-Card berhasil diunduh!", "success");
-    }).catch(() => {
-      this.restoreAfterExport();
-      this.showToast("Gagal mengunduh E-Card", "error");
-    });
+    } catch (err) {
+      clone.remove();
+      this._captureFallback(elementId, filename, "png");
+    }
   },
 
   async downloadAsPDF(elementId, filename = "ecard") {
-    const element = document.getElementById(elementId);
-    if (!element) return;
+    const clone = this._cloneForExport(elementId);
+    if (!clone) return;
 
-    this.darkenForExport(element);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 500));
 
-    html2canvas(element, {
-      scale: 4,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-      allowTaint: true,
-      imageSmoothingEnabled: false,
-      logging: false,
-    }).then(canvas => {
-      this.restoreAfterExport();
-
-      const imgData = canvas.toDataURL("image/png", 1.0);
-      const pdf = new jspdf.jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [105, 148],
-      });
-
-      const maxWidth = 105;
-      const maxHeight = 148;
-      const dpi = 96;
-      const imgWidth = (canvas.width * 25.4) / dpi;
-      const imgHeight = (canvas.height * 25.4) / dpi;
-      const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
-      const finalWidth = imgWidth * scale;
-      const finalHeight = imgHeight * scale;
-
-      pdf.addImage(imgData, "PNG", (maxWidth - finalWidth) / 2, (maxHeight - finalHeight) / 2, finalWidth, finalHeight, undefined, "FAST");
-      pdf.save(`${filename}.pdf`);
+    try {
+      const canvas = await html2canvas(clone, this._captureOptions());
+      clone.remove();
+      this._savePDF(canvas, filename);
       this.showToast("E-Card PDF berhasil diunduh!", "success");
-    }).catch(() => {
-      this.restoreAfterExport();
-      this.showToast("Gagal mengunduh E-Card", "error");
-    });
+    } catch (err) {
+      clone.remove();
+      this._captureFallback(elementId, filename, "pdf");
+    }
   },
 
   getShareUrl(guest) {

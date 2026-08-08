@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel - ENVITATION</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="../config/config.js?v=3"></script>
-  <script src="js/utils.js?v=3"></script>
-  <script src="js/api.js?v=3"></script>
-  <script src="js/admin.js?v=3"></script>
+  <script src="../config/config.js?v=4"></script>
+  <script src="js/utils.js?v=4"></script>
+  <script src="js/api.js?v=4"></script>
+  <script src="js/admin.js?v=4"></script>
 </head>
 <body class="min-h-screen bg-slate-100">
 
   <!-- Login Screen -->
   <div id="login-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-xl shadow-xl max-w-sm w-full mx-4">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full mx-4 fade-in-scale">
       <div class="text-center mb-6">
-        <img src="images/logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-4 drop-shadow" onerror="this.style.display='none'">
-        <h2 class="text-xl font-bold">Panel Panitia</h2>
+        <img src="images/logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-4" style="filter: drop-shadow(0 0 10px rgba(217,119,6,0.3));" onerror="this.style.display='none'">
+        <h2 class="text-xl font-bold" style="font-family: 'Playfair Display', serif;">Panel Panitia</h2>
         <p class="text-slate-500 text-sm mt-1">Masukkan PIN untuk melanjutkan</p>
       </div>
       <div class="mb-4">
@@ -31,290 +31,322 @@
   </div>
 
   <!-- Main Admin Panel -->
-  <div id="admin-panel" class="hidden">
+  <div id="admin-panel" class="hidden admin-layout">
 
-    <!-- Header -->
-    <header class="bg-slate-900 text-white py-4 px-4 sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <!-- Sidebar (Desktop) -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <img src="images/logo.png" alt="Logo" class="admin-sidebar-logo" onerror="this.style.display='none'">
+        <div class="admin-sidebar-title">ENVITATION</div>
+        <div class="admin-sidebar-subtitle" id="sidebar-event-subjek"></div>
+      </div>
+
+      <nav class="admin-nav">
+        <button class="admin-nav-item active" data-tab="dashboard" onclick="Admin.switchTab('dashboard')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          Dashboard
+        </button>
+        <button class="admin-nav-item" data-tab="scanner" onclick="Admin.switchTab('scanner')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+          Scanner QR
+        </button>
+        <button class="admin-nav-item" data-tab="datatamu" onclick="Admin.switchTab('datatamu')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          Data Tamu
+        </button>
+        <button class="admin-nav-item" data-tab="bukutamu" onclick="Admin.switchTab('bukutamu')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          Buku Tamu
+        </button>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button class="admin-logout-btn" onclick="Admin.logout()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Keluar
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Header -->
+      <header class="admin-header">
+        <div>
+          <h1 class="admin-header-title" id="header-title">Dashboard</h1>
+          <p class="admin-header-subtitle" id="header-subtitle">Ringkasan data acara</p>
+        </div>
         <div class="flex items-center gap-3">
-          <img src="images/logo.png" alt="Logo" class="w-10 h-10 drop-shadow" onerror="this.style.display='none'">
-          <div>
-            <h1 class="text-lg font-bold">ENVITATION <span class="text-amber-400">Admin</span></h1>
-            <p class="text-slate-400 text-xs" id="event-subjek-header"></p>
-          </div>
-        </div>
-        <button class="btn btn-outline text-white border-white text-sm py-1 px-3" onclick="Admin.logout()">Keluar</button>
-      </div>
-    </header>
-
-    <!-- Stats Dashboard -->
-    <section class="py-6 px-4">
-      <div class="max-w-7xl mx-auto">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold">Dashboard</h2>
-          <button class="btn btn-primary text-sm py-1 px-3" onclick="Admin.loadStats()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            Refresh
+          <span class="text-sm text-slate-500 hidden md:inline" id="admin-session-info"></span>
+          <button class="btn btn-ghost md:hidden" onclick="Admin.logout()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           </button>
         </div>
+      </header>
 
-        <!-- Stats Grid -->
-        <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-          <div class="stat-card">
-            <div class="stat-number" id="stat-total">-</div>
-            <div class="stat-label">Total Undangan</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number text-green-600" id="stat-hadir">-</div>
-            <div class="stat-label">✅ RSVP Hadir</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number text-yellow-600" id="stat-tentatif">-</div>
-            <div class="stat-label">🟡 Tentatif</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number text-red-600" id="stat-tidak">-</div>
-            <div class="stat-label">❌ Tidak Hadir</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number text-blue-600" id="stat-checkin">-</div>
-            <div class="stat-label">📍 Check-in</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number text-green-700" id="stat-di-dalam">-</div>
-            <div class="stat-label">🟢 Di Dalam</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number text-yellow-700" id="stat-di-luar">-</div>
-            <div class="stat-label">🟡 Di Luar</div>
-          </div>
-        </div>
+      <div class="admin-content">
 
-        <!-- Progress Bars -->
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-          <div class="flex justify-between text-sm mb-2">
-            <span class="font-medium">Check-in Rate</span>
-            <span id="checkin-rate">0%</span>
-          </div>
-          <div class="progress-bar">
-            <div id="checkin-progress" class="progress-fill bg-green-500" style="width: 0%"></div>
-          </div>
-          <div class="flex justify-between text-sm mt-3 mb-2">
-            <span class="font-medium">Estimasi Kehadiran (Hadir + Tentatif)</span>
-            <span id="estimasi-text">0</span>
-          </div>
-          <div class="progress-bar">
-            <div id="estimasi-progress" class="progress-fill bg-amber-500" style="width: 0%"></div>
-          </div>
-          <div class="flex justify-between text-sm mt-3 mb-2">
-            <span class="font-medium">Total Pendamping</span>
-            <span id="pendamping-text">0</span>
-          </div>
-        </div>
-
-        <!-- Kategori Breakdown -->
-        <div id="kategori-container" class="bg-white p-4 rounded-xl shadow-sm mb-6">
-          <h3 class="font-semibold mb-3">Breakdown Kategori</h3>
-          <div id="kategori-list" class="grid grid-cols-2 md:grid-cols-5 gap-2">
-          </div>
-        </div>
-
-        <!-- Komentar Terbaru -->
-        <div id="komentar-container" class="bg-white p-4 rounded-xl shadow-sm mb-6">
-          <h3 class="font-semibold mb-3">Komentar Tamu Terbaru</h3>
-          <div id="komentar-list" class="space-y-2 max-h-48 overflow-y-auto">
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Scanner Section -->
-    <section class="py-6 px-4 bg-slate-50">
-      <div class="max-w-3xl mx-auto">
-        <h2 class="text-lg font-bold mb-4">Scan QR Code</h2>
-
-        <!-- Scanner Mode Toggle -->
-        <div class="flex gap-2 mb-4">
-          <button id="mode-checkin" class="btn btn-success text-sm flex-1" onclick="Admin.setScannerMode('checkin')">
-            Check-in
-          </button>
-          <button id="mode-checkout" class="btn btn-outline text-sm flex-1" onclick="Admin.setScannerMode('checkout')">
-            Pass Keluar
-          </button>
-          <button id="mode-return" class="btn btn-outline text-sm flex-1" onclick="Admin.setScannerMode('return')">
-            Masuk Kembali
-          </button>
-        </div>
-
-        <!-- Scanner -->
-        <div class="bg-white p-4 rounded-xl shadow-sm">
-          <div id="scanner-container" class="scanner-container">
-            <div id="qr-reader" style="width:100%"></div>
-          </div>
-          <p class="text-center text-sm text-slate-500 mt-3" id="scanner-status">Tekan "Mulai Scanner" untuk memulai</p>
-          <div class="flex gap-2 mt-3">
-            <button id="btn-start-scanner" class="btn btn-accent flex-1" onclick="Admin.startScanner()">
-              Mulai Scanner
-            </button>
-            <button id="btn-stop-scanner" class="btn btn-danger flex-1 hidden" onclick="Admin.stopScanner()">
-              Stop Scanner
-            </button>
-          </div>
-        </div>
-
-        <!-- Scan Result -->
-        <div id="scan-result" class="hidden mt-4 bg-white p-4 rounded-xl shadow-sm">
-          <div class="flex items-center gap-3">
-            <div id="scan-result-icon" class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"></div>
-            <div>
-              <h3 id="scan-result-name" class="font-bold"></h3>
-              <p id="scan-result-detail" class="text-sm text-slate-600"></p>
-              <p id="scan-result-message" class="text-sm mt-1"></p>
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-panel active">
+          <!-- Stats Grid -->
+          <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+            <div class="stat-card">
+              <div class="stat-number" id="stat-total">-</div>
+              <div class="stat-label">Total Undangan</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number text-green-600" id="stat-hadir">-</div>
+              <div class="stat-label">✅ RSVP Hadir</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number text-yellow-600" id="stat-tentatif">-</div>
+              <div class="stat-label">🟡 Tentatif</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number text-red-600" id="stat-tidak">-</div>
+              <div class="stat-label">❌ Tidak Hadir</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number text-blue-600" id="stat-checkin">-</div>
+              <div class="stat-label"> Check-in</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number text-green-700" id="stat-di-dalam">-</div>
+              <div class="stat-label">🟢 Di Dalam</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number text-yellow-700" id="stat-di-luar">-</div>
+              <div class="stat-label">🟡 Di Luar</div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- Manual Search & Guest List -->
-    <section class="py-6 px-4">
-      <div class="max-w-7xl mx-auto">
-        <h2 class="text-lg font-bold mb-4">Pencarian & Daftar Tamu</h2>
-
-        <!-- Search Bar -->
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <div class="flex gap-2">
-            <input type="text" id="search-input" class="form-input" placeholder="Cari nama, ID, atau no HP..." oninput="Admin.searchGuests(this.value)">
-            <button class="btn btn-primary" onclick="Admin.searchGuests(document.getElementById('search-input').value)">
-              Cari
-            </button>
-          </div>
-        </div>
-
-        <!-- Add Guest Button -->
-        <div class="flex gap-2 mb-4 flex-wrap">
-          <button class="btn btn-accent" onclick="Admin.showAddGuestForm()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-            Tambah Tamu On-the-Spot
-          </button>
-          <button class="btn btn-primary" onclick="Admin.showImportForm()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            Import Data Tamu
-          </button>
-        </div>
-
-        <!-- Add Guest Form (hidden) -->
-        <div id="add-guest-form" class="hidden bg-white p-4 rounded-xl shadow-sm mb-4">
-          <h3 class="font-semibold mb-3">Tambah Tamu Baru</h3>
-          <div class="grid md:grid-cols-2 gap-3">
-            <div>
-              <label class="form-label">Nama Tamu *</label>
-              <input type="text" id="add-nama" class="form-input" placeholder="Nama lengkap">
-            </div>
-            <div>
-              <label class="form-label">Kategori</label>
-              <select id="add-kategori" class="form-input">
-                <option value="Undangan Umum">Undangan Umum</option>
-                <option value="VIP">VIP</option>
-                <option value="Dosen">Dosen</option>
-                <option value="Orang Tua">Orang Tua</option>
-                <option value="Wisudawan">Wisudawan</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">No. HP</label>
-              <input type="tel" id="add-hp" class="form-input" placeholder="08xxxxxxxxxx">
-            </div>
-            <div>
-              <label class="form-label">Email</label>
-              <input type="email" id="add-email" class="form-input" placeholder="email@example.com">
-            </div>
-          </div>
-          <div class="flex gap-2 mt-4">
-            <button class="btn btn-accent" onclick="Admin.addGuest()">Tambah Tamu</button>
-            <button class="btn btn-outline" onclick="Admin.hideAddGuestForm()">Batal</button>
-          </div>
-        </div>
-
-        <!-- Import Form (hidden) -->
-        <div id="import-form" class="hidden bg-white p-4 rounded-xl shadow-sm mb-4">
-          <h3 class="font-semibold mb-3">Import Data Tamu</h3>
-          <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
-            <p class="font-medium text-amber-800 mb-1">Format File yang Didukung:</p>
-            <ul class="text-amber-700 space-y-1 text-xs">
-              <li><strong>CSV:</strong> Kolom: id_tamu, nama_tamu, instansi_kategori, no_hp, email, status_rsvp, jumlah_pendamping, qr_code_hash, status_kehadiran, status_lokasi, waktu_checkin, komentar_rsvp, catatan_admin</li>
-              <li><strong>JSON:</strong> Array of objects dengan field yang sama</li>
-            </ul>
-            <p class="text-amber-600 text-xs mt-2">QR Hash akan auto-generate jika kosong. Data duplikat (berdasarkan id_tamu) akan dilewati.</p>
-          </div>
-          <div class="mb-4">
-            <label class="form-label">Pilih File *</label>
-            <input type="file" id="import-file" class="form-input" accept=".csv,.json" onchange="Admin.previewImportFile(this)">
-          </div>
-          <div id="import-preview" class="hidden mb-4">
-            <p class="text-sm text-slate-600 mb-2">Preview: <span id="import-file-name" class="font-medium"></span> (<span id="import-record-count">0</span> records)</p>
-          </div>
-          <div id="import-progress" class="hidden mb-4">
-            <div class="flex justify-between text-sm mb-1">
-              <span>Importing...</span>
-              <span id="import-progress-text">0/0</span>
+          <!-- Progress Bars -->
+          <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="font-medium">Check-in Rate</span>
+              <span id="checkin-rate">0%</span>
             </div>
             <div class="progress-bar">
-              <div id="import-progress-bar" class="progress-fill bg-amber-500" style="width: 0%"></div>
+              <div id="checkin-progress" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-sm mt-3 mb-2">
+              <span class="font-medium">Estimasi Kehadiran (Hadir + Tentatif)</span>
+              <span id="estimasi-text">0</span>
+            </div>
+            <div class="progress-bar">
+              <div id="estimasi-progress" class="progress-fill bg-amber-500" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-sm mt-3 mb-2">
+              <span class="font-medium">Total Pendamping</span>
+              <span id="pendamping-text">0</span>
             </div>
           </div>
-          <div id="import-result" class="hidden mb-4 p-3 rounded-lg"></div>
-          <div class="flex gap-2">
-            <button id="btn-import" class="btn btn-primary" onclick="Admin.importGuests()" disabled>
+
+          <!-- Kategori Breakdown -->
+          <div id="kategori-container" class="bg-white p-4 rounded-xl shadow-sm mb-6">
+            <h3 class="font-semibold mb-3">Breakdown Kategori</h3>
+            <div id="kategori-list" class="grid grid-cols-2 md:grid-cols-5 gap-2"></div>
+          </div>
+
+          <!-- Komentar Terbaru -->
+          <div id="komentar-container" class="bg-white p-4 rounded-xl shadow-sm mb-6">
+            <h3 class="font-semibold mb-3">Komentar Tamu Terbaru</h3>
+            <div id="komentar-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+          </div>
+        </div>
+
+        <!-- Scanner Tab -->
+        <div id="tab-scanner" class="tab-panel">
+          <div class="max-w-3xl mx-auto">
+            <!-- Scanner Mode Toggle -->
+            <div class="flex gap-2 mb-4">
+              <button id="mode-checkin" class="btn btn-success text-sm flex-1" onclick="Admin.setScannerMode('checkin')">Check-in</button>
+              <button id="mode-checkout" class="btn btn-outline text-sm flex-1" onclick="Admin.setScannerMode('checkout')">Pass Keluar</button>
+              <button id="mode-return" class="btn btn-outline text-sm flex-1" onclick="Admin.setScannerMode('return')">Masuk Kembali</button>
+            </div>
+
+            <!-- Scanner -->
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+              <div id="scanner-wrapper" class="scanner-container">
+                <div id="qr-reader" style="width:100%"></div>
+                <div id="scanner-feedback" class="scanner-feedback">
+                  <div class="scanner-feedback-icon" id="scanner-feedback-icon"></div>
+                </div>
+              </div>
+              <p class="text-center text-sm text-slate-500 mt-3" id="scanner-status">Tekan "Mulai Scanner" untuk memulai</p>
+              <div class="flex gap-2 mt-3">
+                <button id="btn-start-scanner" class="btn btn-accent flex-1" onclick="Admin.startScanner()">Mulai Scanner</button>
+                <button id="btn-stop-scanner" class="btn btn-danger flex-1 hidden" onclick="Admin.stopScanner()">Stop Scanner</button>
+              </div>
+            </div>
+
+            <!-- Scan Result -->
+            <div id="scan-result" class="hidden mt-4"></div>
+          </div>
+        </div>
+
+        <!-- Data Tamu Tab -->
+        <div id="tab-datatamu" class="tab-panel">
+          <!-- Search Bar -->
+          <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+            <div class="flex gap-2">
+              <input type="text" id="search-input" class="form-input" placeholder="Cari nama, ID, atau no HP..." oninput="Admin.searchGuests(this.value)">
+              <button class="btn btn-primary" onclick="Admin.searchGuests(document.getElementById('search-input').value)">Cari</button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2 mb-4 flex-wrap">
+            <button class="btn btn-accent" onclick="Admin.showAddGuestForm()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+              Tambah Tamu
+            </button>
+            <button class="btn btn-primary" onclick="Admin.showImportForm()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
               Import Data
             </button>
-            <button class="btn btn-outline" onclick="Admin.hideImportForm()">Batal</button>
+            <button class="btn btn-ghost ml-auto" onclick="Admin.loadGuests()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              Refresh
+            </button>
+          </div>
+
+          <!-- Add Guest Form -->
+          <div id="add-guest-form" class="hidden bg-white p-4 rounded-xl shadow-sm mb-4">
+            <h3 class="font-semibold mb-3">Tambah Tamu Baru</h3>
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">Nama Tamu *</label>
+                <input type="text" id="add-nama" class="form-input" placeholder="Nama lengkap">
+              </div>
+              <div>
+                <label class="form-label">Kategori</label>
+                <select id="add-kategori" class="form-input">
+                  <option value="Undangan Umum">Undangan Umum</option>
+                  <option value="VIP">VIP</option>
+                  <option value="Dosen">Dosen</option>
+                  <option value="Orang Tua">Orang Tua</option>
+                  <option value="Wisudawan">Wisudawan</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">No. HP</label>
+                <input type="tel" id="add-hp" class="form-input" placeholder="08xxxxxxxxxx">
+              </div>
+              <div>
+                <label class="form-label">Email</label>
+                <input type="email" id="add-email" class="form-input" placeholder="email@example.com">
+              </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="btn btn-accent" onclick="Admin.addGuest()">Tambah</button>
+              <button class="btn btn-outline" onclick="Admin.hideAddGuestForm()">Batal</button>
+            </div>
+          </div>
+
+          <!-- Import Form -->
+          <div id="import-form" class="hidden bg-white p-4 rounded-xl shadow-sm mb-4">
+            <h3 class="font-semibold mb-3">Import Data Tamu</h3>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">
+              <p class="font-medium text-amber-800 mb-1">Format File:</p>
+              <ul class="text-amber-700 space-y-1 text-xs">
+                <li><strong>CSV:</strong> Kolom: id_tamu, nama_tamu, instansi_kategori, no_hp, email, status_rsvp, jumlah_pendamping, qr_code_hash, status_kehadiran, status_lokasi, waktu_checkin, komentar_rsvp, catatan_admin</li>
+                <li><strong>JSON:</strong> Array of objects dengan field yang sama</li>
+              </ul>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Pilih File *</label>
+              <input type="file" id="import-file" class="form-input" accept=".csv,.json" onchange="Admin.previewImportFile(this)">
+            </div>
+            <div id="import-preview" class="hidden mb-4">
+              <p class="text-sm text-slate-600 mb-2">Preview: <span id="import-file-name" class="font-medium"></span> (<span id="import-record-count">0</span> records)</p>
+            </div>
+            <div id="import-progress" class="hidden mb-4">
+              <div class="flex justify-between text-sm mb-1"><span>Importing...</span><span id="import-progress-text">0/0</span></div>
+              <div class="progress-bar"><div id="import-progress-bar" class="progress-fill bg-amber-500" style="width: 0%"></div></div>
+            </div>
+            <div id="import-result" class="hidden mb-4 p-3 rounded-lg"></div>
+            <div class="flex gap-2">
+              <button id="btn-import" class="btn btn-primary" onclick="Admin.importGuests()" disabled>Import</button>
+              <button class="btn btn-outline" onclick="Admin.hideImportForm()">Batal</button>
+            </div>
+          </div>
+
+          <!-- Guest Table -->
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th><th>Nama</th><th>Kategori</th><th>RSVP</th><th>Pendamping</th><th>Kehadiran</th><th>Lokasi</th><th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="guest-table-body">
+                  <tr><td colspan="8" class="text-center py-8 text-slate-400"><div class="spinner mx-auto mb-2"></div>Memuat data...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <!-- Guest Table -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nama</th>
-                  <th>Kategori</th>
-                  <th>RSVP</th>
-                  <th>Pendamping</th>
-                  <th>Kehadiran</th>
-                  <th>Lokasi</th>
-                  <th>Check-in</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="guest-table-body">
-                <tr>
-                  <td colspan="9" class="text-center py-8 text-slate-400">
-                    <div class="spinner mx-auto mb-2"></div>
-                    Memuat data...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Buku Tamu Tab -->
+        <div id="tab-bukutamu" class="tab-panel">
+          <div class="max-w-3xl mx-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold">Ucapan Tamu</h2>
+              <button class="btn btn-ghost text-sm" onclick="Admin.loadGuestbook()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh
+              </button>
+            </div>
+            <div id="admin-guestbook-feed" class="guestbook-feed">
+              <div class="text-center py-8 text-slate-400">
+                <div class="spinner mx-auto mb-3"></div>
+                <p>Memuat ucapan...</p>
+              </div>
+            </div>
+            <div id="admin-guestbook-empty" class="hidden text-center py-8 text-slate-400">
+              <p>Belum ada ucapan dari tamu.</p>
+            </div>
           </div>
         </div>
+
       </div>
-    </section>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="admin-bottom-nav">
+      <div class="admin-bottom-nav-items">
+        <button class="admin-bottom-nav-item active" data-tab="dashboard" onclick="Admin.switchTab('dashboard')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          Dashboard
+        </button>
+        <button class="admin-bottom-nav-item" data-tab="scanner" onclick="Admin.switchTab('scanner')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+          Scanner
+        </button>
+        <button class="admin-bottom-nav-item" data-tab="datatamu" onclick="Admin.switchTab('datatamu')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Tamu
+        </button>
+        <button class="admin-bottom-nav-item" data-tab="bukutamu" onclick="Admin.switchTab('bukutamu')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          Buku
+        </button>
+      </div>
+    </nav>
 
     <!-- Guest Detail Modal -->
-    <div id="guest-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-4 border-b flex items-center justify-between">
-          <h3 class="font-bold">Detail Tamu</h3>
+    <div id="guest-modal" class="hidden modal-overlay" onclick="if(event.target===this)Admin.closeModal()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Detail Tamu</h3>
           <button onclick="Admin.closeModal()" class="text-slate-400 hover:text-slate-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
-        <div id="guest-modal-content" class="p-4">
-        </div>
-        <div class="p-4 border-t flex gap-2">
+        <div id="guest-modal-content" class="modal-body"></div>
+        <div class="modal-footer">
           <button id="modal-checkin-btn" class="btn btn-success flex-1 text-sm" onclick="Admin.modalCheckIn()">Check-in</button>
           <button id="modal-checkout-btn" class="btn btn-accent flex-1 text-sm" onclick="Admin.modalCheckOut()">Pass Keluar</button>
           <button id="modal-return-btn" class="btn btn-primary flex-1 text-sm hidden" onclick="Admin.modalCheckInReturn()">Masuk Kembali</button>
@@ -322,10 +354,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-white py-4 px-4 text-center">
-      <p class="text-slate-400 text-sm">ENVITATION Admin Panel</p>
-    </footer>
   </div>
 
   <script>

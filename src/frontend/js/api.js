@@ -178,4 +178,16 @@ const API = {
       catatan_admin: catatan,
     });
   },
+
+  addUcapan(idTamu, nama, ucapan) {
+    return this.post("addUcapan", {
+      id_tamu: idTamu,
+      nama: nama,
+      ucapan: ucapan,
+    });
+  },
+
+  getUcapan() {
+    return this.call("getUcapan");
+  },
 };

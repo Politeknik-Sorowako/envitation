@@ -1,11 +1,12 @@
 /**
  * ENVITATION - RSVP Logic
- * Handles verification, countdown, form, submit, and QR rendering
+ * Handles verification, countdown, form, submit, QR rendering, and live status
  */
 
 const RSVP = {
   guest: null,
   countdownInterval: null,
+  statusPollInterval: null,
 
   init() {
     this.populateEventDetails();
@@ -23,7 +24,8 @@ const RSVP = {
     document.getElementById("waktu").textContent = e.waktu;
     document.getElementById("tempat").textContent = e.tempat;
     document.getElementById("dresscode").textContent = e.dresscode;
-    document.getElementById("map-embed").src = e.mapsEmbedUrl;
+    document.getElementById("map-link").href = e.mapsEmbedUrl.replace("embed?pb=", "place?");
+    document.getElementById("footer-event").textContent = `${e.subjek} • ${e.tempat}`;
   },
 
   startCountdown() {
@@ -90,7 +92,7 @@ const RSVP = {
     const btn = document.getElementById("btn-verify");
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<div class="spinner w-5 h-5 border-2"></div> Memverifikasi...';
+      btn.innerHTML = '<div class="spinner spinner-sm"></div> Memverifikasi...';
     }
 
     const id = document.getElementById("input-id").value.trim();
@@ -131,6 +133,7 @@ const RSVP = {
     document.getElementById("verify-section").classList.add("hidden");
     document.getElementById("invitation-section").classList.remove("hidden");
     document.getElementById("rsvp-section").classList.remove("hidden");
+    document.getElementById("guestbook-section").classList.remove("hidden");
 
     document.getElementById("guest-name").textContent = this.guest.nama_tamu;
     document.getElementById("guest-category").textContent = this.guest.instansi_kategori;
@@ -141,6 +144,8 @@ const RSVP = {
 
     this.hideLoading();
     document.getElementById("invitation-section").scrollIntoView({ behavior: "smooth" });
+
+    Guestbook.init();
   },
 
   async submitRSVP() {
@@ -152,7 +157,7 @@ const RSVP = {
 
     const btn = document.getElementById("btn-submit-rsvp");
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner w-5 h-5 border-2"></div> Menyimpan...';
+    btn.innerHTML = '<div class="spinner spinner-sm"></div> Menyimpan...';
 
     const status = selectedStatus.value;
     const pendamping = document.getElementById("pendamping-field").classList.contains("hidden")
@@ -180,7 +185,6 @@ const RSVP = {
 
   renderECard() {
     document.getElementById("rsvp-section").classList.add("hidden");
-    document.getElementById("ecard-section").classList.remove("hidden");
 
     document.getElementById("ec-event-subjek").textContent = CONFIG.EVENT.subjek;
     document.getElementById("ec-guest-name").textContent = this.guest.nama_tamu;
@@ -200,6 +204,52 @@ const RSVP = {
       correctLevel: QRCode.CorrectLevel.H,
     });
 
+    this.updateStatusIndicator();
+    this.startStatusPolling();
+
+    document.getElementById("ecard-section").classList.remove("hidden");
     document.getElementById("ecard-section").scrollIntoView({ behavior: "smooth" });
+  },
+
+  updateStatusIndicator() {
+    const indicator = document.getElementById("ec-status-indicator");
+    const text = document.getElementById("ec-status-text");
+
+    if (!this.guest) return;
+
+    if (this.guest.status_lokasi === "Di Dalam") {
+      indicator.className = "ecard-status inside";
+      text.textContent = "Di Dalam Ruangan";
+    } else if (this.guest.status_lokasi === "Di Luar") {
+      indicator.className = "ecard-status outside";
+      text.textContent = "Di Luar Ruangan";
+    } else {
+      indicator.className = "ecard-status outside";
+      text.textContent = "Belum Check-in";
+    }
+  },
+
+  startStatusPolling() {
+    if (this.statusPollInterval) {
+      clearInterval(this.statusPollInterval);
+    }
+
+    this.statusPollInterval = setInterval(async () => {
+      if (!this.guest || !this.guest.qr_code_hash) return;
+
+      const result = await API.getGuest(null, this.guest.qr_code_hash);
+      if (result.success && result.guest) {
+        this.guest.status_lokasi = result.guest.status_lokasi;
+        this.guest.status_kehadiran = result.guest.status_kehadiran;
+        this.updateStatusIndicator();
+      }
+    }, 10000);
+  },
+
+  stopStatusPolling() {
+    if (this.statusPollInterval) {
+      clearInterval(this.statusPollInterval);
+      this.statusPollInterval = null;
+    }
   },
 };

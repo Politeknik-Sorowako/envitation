@@ -25,6 +25,16 @@ CREATE TABLE IF NOT EXISTS data_tamu (
 CREATE INDEX IF NOT EXISTS idx_id_tamu ON data_tamu(id_tamu);
 CREATE INDEX IF NOT EXISTS idx_qr_hash ON data_tamu(qr_code_hash);
 CREATE INDEX IF NOT EXISTS idx_status_rsvp ON data_tamu(status_rsvp);
+
+CREATE TABLE IF NOT EXISTS data_ucapan (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_tamu TEXT DEFAULT '',
+  nama TEXT NOT NULL,
+  ucapan TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ucapan_tamu ON data_ucapan(id_tamu);
 `;
 
 function run(db, sql, params = []) {

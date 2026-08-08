@@ -57,6 +57,12 @@ function handleRequest(e) {
       case "verifyAdmin":
         result = verifyAdmin(params);
         break;
+      case "addUcapan":
+        result = addUcapan(params);
+        break;
+      case "getUcapan":
+        result = getUcapan();
+        break;
       default:
         result = { success: false, message: "Action tidak dikenali: " + action };
     }
@@ -549,4 +555,51 @@ function verifyAdmin(params) {
     return { success: true, message: "PIN valid." };
   }
   return { success: false, message: "PIN tidak valid." };
+}
+
+function getUcapanSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Data_Ucapan");
+  if (!sheet) {
+    sheet = ss.insertSheet("Data_Ucapan");
+    sheet.appendRow(["id", "id_tamu", "nama", "ucapan", "created_at"]);
+  }
+  return sheet;
+}
+
+function addUcapan(params) {
+  const idTamu = params.id_tamu;
+  const nama = params.nama;
+  const ucapan = params.ucapan;
+
+  if (!nama || !ucapan) {
+    return { success: false, message: "Nama dan ucapan wajib diisi." };
+  }
+
+  const sheet = getUcapanSheet();
+  const id = "UCP" + String(sheet.getLastRow()).padStart(4, "0");
+  const now = new Date();
+  const timestamp = Utilities.formatDate(now, "Asia/Makassar", "yyyy-MM-dd HH:mm:ss");
+
+  sheet.appendRow([id, idTamu, nama, ucapan, timestamp]);
+
+  return { success: true, message: "Ucapan berhasil dikirim." };
+}
+
+function getUcapan() {
+  const sheet = getUcapanSheet();
+  const data = sheet.getDataRange().getValues();
+  const messages = [];
+
+  for (let i = data.length - 1; i >= 1 && messages.length < 50; i--) {
+    messages.push({
+      id: data[i][0],
+      id_tamu: data[i][1],
+      nama: data[i][2],
+      ucapan: data[i][3],
+      created_at: data[i][4],
+    });
+  }
+
+  return { success: true, messages: messages };
 }

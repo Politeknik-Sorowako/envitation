@@ -304,6 +304,24 @@ async function updateAdminNote(db, params, adminPin) {
   return { success: true, message: 'Catatan admin diperbarui.' };
 }
 
+async function addUcapan(db, params) {
+  const nama = params.nama;
+  const ucapan = params.ucapan;
+
+  if (!nama || !ucapan) {
+    return { success: false, message: 'Nama dan ucapan wajib diisi.' };
+  }
+
+  await run(db, 'INSERT INTO data_ucapan (id_tamu, nama, ucapan) VALUES (?, ?, ?)', [params.id_tamu || '', nama, ucapan]);
+
+  return { success: true, message: 'Ucapan berhasil dikirim.' };
+}
+
+async function getUcapan(db) {
+  const messages = await all(db, 'SELECT * FROM data_ucapan ORDER BY id DESC LIMIT 50');
+  return { success: true, messages: messages };
+}
+
 function verifyAdmin(params, adminPin) {
   const pin = params.pin;
   if (pin === adminPin) {
@@ -350,6 +368,9 @@ async function handleGetRequest(req, res, db, ADMIN_PIN) {
       case 'verifyAdmin':
         result = verifyAdmin(req.query, ADMIN_PIN);
         break;
+      case 'getUcapan':
+        result = await getUcapan(db);
+        break;
       default:
         result = { success: false, message: 'Action tidak dikenali: ' + action };
     }
@@ -386,6 +407,9 @@ async function handlePostRequest(req, res, db, ADMIN_PIN) {
         break;
       case 'updateAdminNote':
         result = await updateAdminNote(db, req.body, ADMIN_PIN);
+        break;
+      case 'addUcapan':
+        result = await addUcapan(db, req.body);
         break;
       default:
         result = { success: false, message: 'Action tidak dikenali: ' + action };

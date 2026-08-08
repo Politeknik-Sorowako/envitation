@@ -127,26 +127,52 @@ const Utils = {
     const element = document.getElementById(elementId);
     if (!element) return;
 
-    element.classList.add("ecard-print-mode");
+    const textElements = element.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300");
+    const originalStyles = [];
+    textElements.forEach(el => {
+      originalStyles.push(el.style.cssText);
+      el.style.color = "#1e293b";
+      el.style.opacity = "1";
+    });
+
+    const qrCanvas = element.querySelector("#ec-qr-code canvas");
+    let qrImgEl = null;
+    if (qrCanvas) {
+      qrImgEl = document.createElement("img");
+      qrImgEl.src = qrCanvas.toDataURL("image/png");
+      qrImgEl.style.width = "100%";
+      qrImgEl.style.height = "100%";
+      qrImgEl.style.display = "block";
+      qrCanvas.style.visibility = "hidden";
+      qrCanvas.parentNode.insertBefore(qrImgEl, qrCanvas);
+    }
+
+    const logoEl = element.querySelector(".ecard-logo");
+    const logoOriginal = { filter: "", animation: "" };
+    if (logoEl) {
+      logoOriginal.filter = logoEl.style.filter;
+      logoOriginal.animation = logoEl.style.animation;
+      logoEl.style.filter = "none";
+      logoEl.style.animation = "none";
+    }
 
     html2canvas(element, {
       scale: 3,
       backgroundColor: "#ffffff",
       useCORS: true,
+      allowTaint: true,
       imageSmoothingEnabled: false,
       logging: false,
     }).then(canvas => {
-      element.classList.remove("ecard-print-mode");
-
-      const ctx = canvas.getContext("2d");
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.min(255, data[i] * 1.15);
-        data[i + 1] = Math.min(255, data[i + 1] * 1.15);
-        data[i + 2] = Math.min(255, data[i + 2] * 1.15);
+      textElements.forEach((el, i) => {
+        el.style.cssText = originalStyles[i];
+      });
+      if (qrImgEl) qrImgEl.remove();
+      if (qrCanvas) qrCanvas.style.visibility = "";
+      if (logoEl) {
+        logoEl.style.filter = logoOriginal.filter;
+        logoEl.style.animation = logoOriginal.animation;
       }
-      ctx.putImageData(imageData, 0, 0);
 
       const link = document.createElement("a");
       link.download = `${filename}.png`;
@@ -154,7 +180,16 @@ const Utils = {
       link.click();
       this.showToast("E-Card berhasil diunduh!", "success");
     }).catch(() => {
-      element.classList.remove("ecard-print-mode");
+      textElements.forEach((el, i) => {
+        el.style.cssText = originalStyles[i];
+      });
+      if (qrImgEl) qrImgEl.remove();
+      if (qrCanvas) qrCanvas.style.visibility = "";
+      if (logoEl) {
+        logoEl.style.filter = logoOriginal.filter;
+        logoEl.style.animation = logoOriginal.animation;
+      }
+      this.showToast("Gagal mengunduh E-Card", "error");
     });
   },
 
@@ -162,26 +197,52 @@ const Utils = {
     const element = document.getElementById(elementId);
     if (!element) return;
 
-    element.classList.add("ecard-print-mode");
+    const textElements = element.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300");
+    const originalStyles = [];
+    textElements.forEach(el => {
+      originalStyles.push(el.style.cssText);
+      el.style.color = "#1e293b";
+      el.style.opacity = "1";
+    });
+
+    const qrCanvas = element.querySelector("#ec-qr-code canvas");
+    let qrImgEl = null;
+    if (qrCanvas) {
+      qrImgEl = document.createElement("img");
+      qrImgEl.src = qrCanvas.toDataURL("image/png");
+      qrImgEl.style.width = "100%";
+      qrImgEl.style.height = "100%";
+      qrImgEl.style.display = "block";
+      qrCanvas.style.visibility = "hidden";
+      qrCanvas.parentNode.insertBefore(qrImgEl, qrCanvas);
+    }
+
+    const logoEl = element.querySelector(".ecard-logo");
+    const logoOriginal = { filter: "", animation: "" };
+    if (logoEl) {
+      logoOriginal.filter = logoEl.style.filter;
+      logoOriginal.animation = logoEl.style.animation;
+      logoEl.style.filter = "none";
+      logoEl.style.animation = "none";
+    }
 
     html2canvas(element, {
       scale: 3,
       backgroundColor: "#ffffff",
       useCORS: true,
+      allowTaint: true,
       imageSmoothingEnabled: false,
       logging: false,
     }).then(canvas => {
-      element.classList.remove("ecard-print-mode");
-
-      const ctx = canvas.getContext("2d");
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.min(255, data[i] * 1.15);
-        data[i + 1] = Math.min(255, data[i + 1] * 1.15);
-        data[i + 2] = Math.min(255, data[i + 2] * 1.15);
+      textElements.forEach((el, i) => {
+        el.style.cssText = originalStyles[i];
+      });
+      if (qrImgEl) qrImgEl.remove();
+      if (qrCanvas) qrCanvas.style.visibility = "";
+      if (logoEl) {
+        logoEl.style.filter = logoOriginal.filter;
+        logoEl.style.animation = logoOriginal.animation;
       }
-      ctx.putImageData(imageData, 0, 0);
 
       const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jspdf.jsPDF({
@@ -197,7 +258,16 @@ const Utils = {
       pdf.save(`${filename}.pdf`);
       this.showToast("E-Card PDF berhasil diunduh!", "success");
     }).catch(() => {
-      element.classList.remove("ecard-print-mode");
+      textElements.forEach((el, i) => {
+        el.style.cssText = originalStyles[i];
+      });
+      if (qrImgEl) qrImgEl.remove();
+      if (qrCanvas) qrCanvas.style.visibility = "";
+      if (logoEl) {
+        logoEl.style.filter = logoOriginal.filter;
+        logoEl.style.animation = logoOriginal.animation;
+      }
+      this.showToast("Gagal mengunduh E-Card", "error");
     });
   },
 };

@@ -266,73 +266,82 @@ function registerRoutes(app, db) {
   const ADMIN_PIN = process.env.ADMIN_PIN || '202608';
 
   app.get('/', (req, res) => {
-    res.json({ success: true, message: 'ENVITATION SQLite Backend is running.' });
-  });
-
-  app.get('/api', async (req, res) => {
     const action = req.query.action || '';
-    let result;
-
-    try {
-      switch (action) {
-        case 'verify':
-          result = await verifyGuest(db, req.query);
-          break;
-        case 'search':
-          result = await searchGuests(db, req.query);
-          break;
-        case 'stats':
-          result = await getStats(db);
-          break;
-        case 'getGuest':
-          result = await getGuest(db, req.query);
-          break;
-        case 'verifyAdmin':
-          result = verifyAdmin(req.query, ADMIN_PIN);
-          break;
-        default:
-          result = { success: false, message: 'Action tidak dikenali: ' + action };
-      }
-    } catch (err) {
-      result = { success: false, message: 'Error: ' + err.toString() };
+    if (!action) {
+      return res.json({ success: true, message: 'ENVITATION SQLite Backend is running.' });
     }
 
-    res.json(result);
+    handleGetRequest(req, res, db, ADMIN_PIN);
   });
 
-  app.post('/api', async (req, res) => {
-    const action = req.body.action || '';
-    let result;
+  app.post('/', (req, res) => {
+    handlePostRequest(req, res, db, ADMIN_PIN);
+  });
+}
 
-    try {
-      switch (action) {
-        case 'rsvp':
-          result = await submitRSVP(db, req.body);
-          break;
-        case 'checkin':
-          result = await checkIn(db, req.body);
-          break;
-        case 'checkout':
-          result = await checkOut(db, req.body);
-          break;
-        case 'checkin_return':
-          result = await checkInReturn(db, req.body);
-          break;
-        case 'addGuest':
-          result = await addGuest(db, req.body, ADMIN_PIN);
-          break;
-        case 'updateAdminNote':
-          result = await updateAdminNote(db, req.body, ADMIN_PIN);
-          break;
-        default:
-          result = { success: false, message: 'Action tidak dikenali: ' + action };
-      }
-    } catch (err) {
-      result = { success: false, message: 'Error: ' + err.toString() };
+async function handleGetRequest(req, res, db, ADMIN_PIN) {
+  const action = req.query.action || '';
+  let result;
+
+  try {
+    switch (action) {
+      case 'verify':
+        result = await verifyGuest(db, req.query);
+        break;
+      case 'search':
+        result = await searchGuests(db, req.query);
+        break;
+      case 'stats':
+        result = await getStats(db);
+        break;
+      case 'getGuest':
+        result = await getGuest(db, req.query);
+        break;
+      case 'verifyAdmin':
+        result = verifyAdmin(req.query, ADMIN_PIN);
+        break;
+      default:
+        result = { success: false, message: 'Action tidak dikenali: ' + action };
     }
+  } catch (err) {
+    result = { success: false, message: 'Error: ' + err.toString() };
+  }
 
-    res.json(result);
-  });
+  res.json(result);
+}
+
+async function handlePostRequest(req, res, db, ADMIN_PIN) {
+  const action = req.body.action || '';
+  let result;
+
+  try {
+    switch (action) {
+      case 'rsvp':
+        result = await submitRSVP(db, req.body);
+        break;
+      case 'checkin':
+        result = await checkIn(db, req.body);
+        break;
+      case 'checkout':
+        result = await checkOut(db, req.body);
+        break;
+      case 'checkin_return':
+        result = await checkInReturn(db, req.body);
+        break;
+      case 'addGuest':
+        result = await addGuest(db, req.body, ADMIN_PIN);
+        break;
+      case 'updateAdminNote':
+        result = await updateAdminNote(db, req.body, ADMIN_PIN);
+        break;
+      default:
+        result = { success: false, message: 'Action tidak dikenali: ' + action };
+    }
+  } catch (err) {
+    result = { success: false, message: 'Error: ' + err.toString() };
+  }
+
+  res.json(result);
 }
 
 module.exports = { registerRoutes };

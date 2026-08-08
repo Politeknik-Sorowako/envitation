@@ -38,12 +38,12 @@ const CONFIG = {
   },
 
   BACKEND: {
-    type: "gas",
+    type: "sqlite",
     gas: {
       url: "https://script.google.com/macros/s/AKfycbwqM793JFjKmZRCdvYAUBRGHpB_EfmI4AsqOS9aQ2Xva6tTFZ66uvBdHsuuqpj57jUU/exec",
     },
     sqlite: {
-      url: "http://localhost:3000",
+      url: "http://localhost:3001",
     },
   },
 

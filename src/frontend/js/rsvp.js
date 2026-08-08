@@ -104,15 +104,15 @@ const RSVP = {
 
     const result = await API.verify(id || null, nama || null, hp || null);
 
-    if (result.success) {
+    if (result.success && result.guest) {
       this.guest = result.guest;
       document.getElementById("verify-error").classList.add("hidden");
       this.showInvitation();
       Utils.showToast(`Selamat datang, ${this.guest.nama_tamu}!`, "success");
     } else {
       document.getElementById("verify-error").classList.remove("hidden");
-      document.getElementById("verify-error-msg").textContent = result.message;
-      Utils.showToast(result.message, "error");
+      document.getElementById("verify-error-msg").textContent = result.message || "Tamu tidak ditemukan.";
+      Utils.showToast(result.message || "Tamu tidak ditemukan.", "error");
     }
 
     btn.disabled = false;

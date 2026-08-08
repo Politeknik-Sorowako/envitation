@@ -123,151 +123,143 @@ const Utils = {
     });
   },
 
-  downloadAsPNG(elementId, filename = "ecard") {
-    const element = document.getElementById(elementId);
-    if (!element) return;
+  darkenForExport(element) {
+    this._exportState = { text: [], qr: [], logo: null };
 
-    const textElements = element.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300");
-    const originalStyles = [];
-    textElements.forEach(el => {
-      originalStyles.push(el.style.cssText);
-      el.style.color = "#1e293b";
-      el.style.opacity = "1";
+    element.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300, .text-slate-600, #ec-guest-name").forEach(el => {
+      this._exportState.text.push({ el, color: el.style.color, opacity: el.style.opacity });
+      el.style.setProperty("color", "#0f172a", "important");
+      el.style.setProperty("opacity", "1", "important");
     });
 
     const qrCanvas = element.querySelector("#ec-qr-code canvas");
-    let qrImgEl = null;
     if (qrCanvas) {
-      qrImgEl = document.createElement("img");
+      const qrImgEl = document.createElement("img");
       qrImgEl.src = qrCanvas.toDataURL("image/png");
-      qrImgEl.style.width = "100%";
-      qrImgEl.style.height = "100%";
-      qrImgEl.style.display = "block";
+      qrImgEl.style.cssText = "width:100% !important;height:100% !important;display:block;";
       qrCanvas.style.visibility = "hidden";
       qrCanvas.parentNode.insertBefore(qrImgEl, qrCanvas);
+      this._exportState.qr.push({ canvas: qrCanvas, img: qrImgEl });
     }
 
     const logoEl = element.querySelector(".ecard-logo");
-    const logoOriginal = { filter: "", animation: "" };
     if (logoEl) {
-      logoOriginal.filter = logoEl.style.filter;
-      logoOriginal.animation = logoEl.style.animation;
+      this._exportState.logo = { el: logoEl, filter: logoEl.style.filter, animation: logoEl.style.animation };
       logoEl.style.filter = "none";
       logoEl.style.animation = "none";
     }
+  },
+
+  restoreAfterExport() {
+    if (this._exportState) {
+      this._exportState.text.forEach(({ el, color, opacity }) => {
+        el.style.color = color;
+        el.style.opacity = opacity;
+      });
+      this._exportState.qr.forEach(({ canvas, img }) => {
+        img.remove();
+        canvas.style.visibility = "";
+      });
+      if (this._exportState.logo) {
+        const { el, filter, animation } = this._exportState.logo;
+        el.style.filter = filter;
+        el.style.animation = animation;
+      }
+      this._exportState = null;
+    }
+  },
+
+  async downloadAsPNG(elementId, filename = "ecard") {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    this.darkenForExport(element);
+    await new Promise(r => setTimeout(r, 100));
 
     html2canvas(element, {
-      scale: 3,
+      scale: 4,
       backgroundColor: "#ffffff",
       useCORS: true,
       allowTaint: true,
       imageSmoothingEnabled: false,
       logging: false,
     }).then(canvas => {
-      textElements.forEach((el, i) => {
-        el.style.cssText = originalStyles[i];
-      });
-      if (qrImgEl) qrImgEl.remove();
-      if (qrCanvas) qrCanvas.style.visibility = "";
-      if (logoEl) {
-        logoEl.style.filter = logoOriginal.filter;
-        logoEl.style.animation = logoOriginal.animation;
-      }
-
+      this.restoreAfterExport();
       const link = document.createElement("a");
       link.download = `${filename}.png`;
       link.href = canvas.toDataURL("image/png", 1.0);
       link.click();
       this.showToast("E-Card berhasil diunduh!", "success");
     }).catch(() => {
-      textElements.forEach((el, i) => {
-        el.style.cssText = originalStyles[i];
-      });
-      if (qrImgEl) qrImgEl.remove();
-      if (qrCanvas) qrCanvas.style.visibility = "";
-      if (logoEl) {
-        logoEl.style.filter = logoOriginal.filter;
-        logoEl.style.animation = logoOriginal.animation;
-      }
+      this.restoreAfterExport();
       this.showToast("Gagal mengunduh E-Card", "error");
     });
   },
 
-  downloadAsPDF(elementId, filename = "ecard") {
+  async downloadAsPDF(elementId, filename = "ecard") {
     const element = document.getElementById(elementId);
     if (!element) return;
 
-    const textElements = element.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300");
-    const originalStyles = [];
-    textElements.forEach(el => {
-      originalStyles.push(el.style.cssText);
-      el.style.color = "#1e293b";
-      el.style.opacity = "1";
-    });
-
-    const qrCanvas = element.querySelector("#ec-qr-code canvas");
-    let qrImgEl = null;
-    if (qrCanvas) {
-      qrImgEl = document.createElement("img");
-      qrImgEl.src = qrCanvas.toDataURL("image/png");
-      qrImgEl.style.width = "100%";
-      qrImgEl.style.height = "100%";
-      qrImgEl.style.display = "block";
-      qrCanvas.style.visibility = "hidden";
-      qrCanvas.parentNode.insertBefore(qrImgEl, qrCanvas);
-    }
-
-    const logoEl = element.querySelector(".ecard-logo");
-    const logoOriginal = { filter: "", animation: "" };
-    if (logoEl) {
-      logoOriginal.filter = logoEl.style.filter;
-      logoOriginal.animation = logoEl.style.animation;
-      logoEl.style.filter = "none";
-      logoEl.style.animation = "none";
-    }
+    this.darkenForExport(element);
+    await new Promise(r => setTimeout(r, 100));
 
     html2canvas(element, {
-      scale: 3,
+      scale: 4,
       backgroundColor: "#ffffff",
       useCORS: true,
       allowTaint: true,
       imageSmoothingEnabled: false,
       logging: false,
     }).then(canvas => {
-      textElements.forEach((el, i) => {
-        el.style.cssText = originalStyles[i];
-      });
-      if (qrImgEl) qrImgEl.remove();
-      if (qrCanvas) qrCanvas.style.visibility = "";
-      if (logoEl) {
-        logoEl.style.filter = logoOriginal.filter;
-        logoEl.style.animation = logoOriginal.animation;
-      }
+      this.restoreAfterExport();
 
       const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jspdf.jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4",
+        format: [105, 148],
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const maxWidth = 105;
+      const maxHeight = 148;
+      const dpi = 96;
+      const imgWidth = (canvas.width * 25.4) / dpi;
+      const imgHeight = (canvas.height * 25.4) / dpi;
+      const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
+      const finalWidth = imgWidth * scale;
+      const finalHeight = imgHeight * scale;
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+      pdf.addImage(imgData, "PNG", (maxWidth - finalWidth) / 2, (maxHeight - finalHeight) / 2, finalWidth, finalHeight, undefined, "FAST");
       pdf.save(`${filename}.pdf`);
       this.showToast("E-Card PDF berhasil diunduh!", "success");
     }).catch(() => {
-      textElements.forEach((el, i) => {
-        el.style.cssText = originalStyles[i];
-      });
-      if (qrImgEl) qrImgEl.remove();
-      if (qrCanvas) qrCanvas.style.visibility = "";
-      if (logoEl) {
-        logoEl.style.filter = logoOriginal.filter;
-        logoEl.style.animation = logoOriginal.animation;
-      }
+      this.restoreAfterExport();
       this.showToast("Gagal mengunduh E-Card", "error");
     });
+  },
+
+  getShareUrl(guest) {
+    const base = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
+    return `${base}ecard.html?id=${encodeURIComponent(guest.id_tamu)}&qr=${encodeURIComponent(guest.qr_code_hash)}`;
+  },
+
+  shareToWhatsApp(guest) {
+    if (!guest || !guest.id_tamu) {
+      this.showToast("Data tamu tidak ditemukan", "error");
+      return;
+    }
+
+    const ecardUrl = this.getShareUrl(guest);
+    const template = (CONFIG.SHARE && CONFIG.SHARE.messageTemplate) ||
+      "🎓 Undangan {EVENT_SUBJECT}\n\nIni E-Card undangan {GUEST_NAME}.\n\n{ECARD_LINK}";
+
+    const applied = template
+      .replace(/\{EVENT_SUBJECT\}/g, CONFIG.EVENT.subjek)
+      .replace(/\{EVENT_DATE\}/g, CONFIG.EVENT.tanggal)
+      .replace(/\{EVENT_LOCATION\}/g, CONFIG.EVENT.tempat)
+      .replace(/\{GUEST_NAME\}/g, guest.nama_tamu)
+      .replace(/\{ECARD_LINK\}/g, ecardUrl);
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(applied)}`, "_blank");
   },
 };

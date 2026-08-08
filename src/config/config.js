@@ -53,6 +53,10 @@ const CONFIG = {
     pinLabel: "Masukkan PIN Panitia",
   },
 
+  SHARE: {
+    messageTemplate: "🎓 Undangan {EVENT_SUBJECT}\n\nIni E-Card undangan {GUEST_NAME} untuk acara {EVENT_SUBJECT}.\n\n📅 {EVENT_DATE}\n📍 {EVENT_LOCATION}\n\nTunjukkan QR Code ini saat check-in di lokasi.\n\n{ECARD_LINK}",
+  },
+
   SHEET: {
     dataTamu: "Data_Tamu",
     columns: {

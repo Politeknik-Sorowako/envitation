@@ -292,11 +292,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ecard-qr {
-  width: 280px;
-  height: 280px;
+  width: 220px;
+  height: 220px;
   margin: 1.5rem auto;
   background: white;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: var(--radius);
   display: flex;
   align-items: center;
@@ -1283,8 +1283,8 @@ tr:hover {
   }
 
   .ecard-qr {
-    width: 240px;
-    height: 240px;
+    width: 200px;
+    height: 200px;
   }
 
   .rsvp-options {
@@ -1315,8 +1315,8 @@ tr:hover {
   }
 
   .ecard-qr {
-    width: 200px;
-    height: 200px;
+    width: 180px;
+    height: 180px;
   }
 
   .ecard-logo {
@@ -1342,21 +1342,4 @@ tr:hover {
   }
 }
 
-/* ===== E-CARD PRINT MODE (for download) ===== */
-.ecard-print-mode .text-slate-400,
-.ecard-print-mode .text-slate-500 {
-  color: #334155 !important;
-}
-
-.ecard-print-mode .text-slate-300 {
-  color: #475569 !important;
-}
-
-.ecard-print-mode .ecard-qr {
-  border: 2px solid #e2e8f0;
-}
-
-.ecard-print-mode .gold-line,
-.ecard-print-mode .gold-line-thick {
-  opacity: 0.8;
-}
+/* ===== E-CARD EXPORT ===== */

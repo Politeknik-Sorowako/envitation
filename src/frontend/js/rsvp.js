@@ -197,8 +197,8 @@ const RSVP = {
     qrContainer.innerHTML = "";
     new QRCode(qrContainer, {
       text: this.guest.qr_code_hash,
-      width: 256,
-      height: 256,
+      width: 200,
+      height: 200,
       colorDark: "#000000",
       colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.H,
@@ -251,5 +251,9 @@ const RSVP = {
       clearInterval(this.statusPollInterval);
       this.statusPollInterval = null;
     }
+  },
+
+  shareToWhatsApp() {
+    Utils.shareToWhatsApp(this.guest);
   },
 };

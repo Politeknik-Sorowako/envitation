@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Card Undangan - ENVITATION</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="../config/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <style>
+    .hero-bg {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, #334155 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100">
+
+  <!-- Loading -->
+  <div id="loading-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
+    <div class="text-center">
+      <div class="spinner mx-auto mb-4"></div>
+      <p class="text-white text-sm">Memuat E-Card...</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="ecard-content" class="hidden py-8 px-4">
+    <div class="max-w-md mx-auto">
+
+      <!-- Back Button -->
+      <div class="mb-4">
+        <a href="index.html" class="text-slate-600 hover:text-slate-900 text-sm inline-flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          Kembali ke Undangan
+        </a>
+      </div>
+
+      <h2 class="text-2xl font-bold text-center mb-2">E-Card Undangan Resmi</h2>
+      <p class="text-slate-600 text-center text-sm mb-6">Tunjukkan QR Code ini saat check-in di lokasi acara</p>
+
+      <!-- E-Card -->
+      <div id="ecard-container" class="ecard fade-in">
+        <div class="mb-4">
+          <p class="text-amber-600 text-xs uppercase tracking-widest">E-Card Undangan</p>
+          <p class="text-slate-400 text-xs" id="ec-penyelenggara"></p>
+        </div>
+        <div class="gold-line mx-auto"></div>
+        <h3 class="text-lg font-bold text-center mt-4" id="ec-subjek"></h3>
+        <div class="gold-line mx-auto"></div>
+        <h3 class="text-xl font-bold mt-4" id="ec-guest-name"></h3>
+        <p class="text-slate-600 text-sm" id="ec-guest-category"></p>
+        <p class="text-slate-400 text-xs mt-1" id="ec-guest-id"></p>
+        <div id="ec-rsvp-badge" class="mt-3 flex justify-center"></div>
+        <div class="ecard-qr mt-4">
+          <div id="ec-qr-code"></div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">Scan QR Code ini saat check-in</p>
+        <div class="gold-line mx-auto mt-4"></div>
+        <div class="text-center mt-2">
+          <p class="text-xs text-slate-500" id="ec-tanggal"></p>
+          <p class="text-xs text-slate-500" id="ec-tempat"></p>
+        </div>
+        <p class="text-xs text-slate-400 mt-4">Powered by ENVITATION</p>
+      </div>
+
+      <!-- Download Buttons -->
+      <div class="flex gap-3 mt-6">
+        <button class="btn btn-outline flex-1" onclick="Utils.downloadAsPNG('ecard-container', 'ecard-undangan')">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Simpan Gambar
+        </button>
+        <button class="btn btn-primary flex-1" onclick="Utils.downloadAsPDF('ecard-container', 'ecard-undangan')">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Simpan PDF
+        </button>
+      </div>
+
+      <!-- Info -->
+      <div class="bg-white p-4 rounded-lg mt-6 text-sm text-slate-600">
+        <h4 class="font-semibold mb-2">Petunjuk Penggunaan:</h4>
+        <ul class="space-y-1 text-xs">
+          <li>1. Simpan E-Card ini di perangkat Anda</li>
+          <li>2. Tunjukkan QR Code saat check-in di lokasi</li>
+          <li>3. QR Code berlaku untuk semua status RSVP</li>
+          <li>4. Jika status "Tentatif", panitia akan mengkonfirmasi kehadiran Anda</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const id = Utils.getQueryParam("id");
+      const qrHash = Utils.getQueryParam("qr");
+
+      if (!id && !qrHash) {
+        Utils.showToast("ID atau QR Hash diperlukan", "error");
+        setTimeout(() => window.location.href = "index.html", 2000);
+        return;
+      }
+
+      const result = await API.getGuest(id, qrHash);
+
+      if (!result.success) {
+        Utils.showToast("Tamu tidak ditemukan", "error");
+        setTimeout(() => window.location.href = "index.html", 2000);
+        return;
+      }
+
+      const g = result.guest;
+
+      document.getElementById("ec-penyelenggara").textContent = CONFIG.EVENT.penyelenggara;
+      document.getElementById("ec-subjek").textContent = CONFIG.EVENT.subjek;
+      document.getElementById("ec-guest-name").textContent = g.nama_tamu;
+      document.getElementById("ec-guest-category").textContent = g.instansi_kategori;
+      document.getElementById("ec-guest-id").textContent = `ID: ${g.id_tamu}`;
+      document.getElementById("ec-rsvp-badge").innerHTML = Utils.getRSVPBadge(g.status_rsvp);
+      document.getElementById("ec-tanggal").textContent = CONFIG.EVENT.tanggal;
+      document.getElementById("ec-tempat").textContent = CONFIG.EVENT.tempat;
+
+      const qrContainer = document.getElementById("ec-qr-code");
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: g.qr_code_hash,
+        width: 180,
+        height: 180,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+
+      document.getElementById("loading-screen").classList.add("hidden");
+      document.getElementById("ecard-content").classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>

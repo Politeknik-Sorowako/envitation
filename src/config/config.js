@@ -1,0 +1,86 @@
+/**
+ * ENVITATION - Konfigurasi Terpusat
+ * Ubah parameter di sini untuk menggunakan ulang di event lain.
+ */
+
+const CONFIG = {
+  EVENT: {
+    subjek: "WISUDA Diploma III Angkatan XXXIII",
+    penyelenggara: "Politeknik Sorowako",
+    tanggal: "Senin, 24 Agustus 2026",
+    tanggalISO: "2026-08-24T07:00:00+08:00",
+    waktu: "Pkl. 07.00 WITA - selesai",
+    tempat: "Gedung Ontaeluwu Sorowako",
+    mapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3980.5!2d121.3!3d-2.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sGedung+Ontaeluwu+Sorowako!5e0!3m2!1sid!2sid!4v1",
+    deskripsi: "Dengan hormatnya kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara Wisuda Diploma III Angkatan XXXIII Politeknik Sorowako.",
+    dresscode: "Pakaian Formal / Batik / Jas",
+  },
+
+  THEME: {
+    primary: "#0f172a",
+    primaryLight: "#1e293b",
+    accent: "#d97706",
+    accentLight: "#f59e0b",
+    background: "#f8fafc",
+    surface: "#ffffff",
+    text: "#0f172a",
+    textMuted: "#64748b",
+    success: "#22c55e",
+    warning: "#eab308",
+    danger: "#ef4444",
+    info: "#3b82f6",
+  },
+
+  API: {
+    baseUrl: "https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec",
+    timeout: 15000,
+    retries: 2,
+  },
+
+  ADMIN: {
+    pin: "202608",
+    pinLabel: "Masukkan PIN Panitia",
+  },
+
+  SHEET: {
+    dataTamu: "Data_Tamu",
+    columns: {
+      id_tamu: 0,
+      nama_tamu: 1,
+      instansi_kategori: 2,
+      no_hp: 3,
+      email: 4,
+      status_rsvp: 5,
+      jumlah_pendamping: 6,
+      qr_code_hash: 7,
+      status_kehadiran: 8,
+      status_lokasi: 9,
+      waktu_checkin: 10,
+      komentar_rsvp: 11,
+      catatan_admin: 12,
+    },
+  },
+
+  RSVP_STATUS: {
+    BELUM: "Belum Konfirmasi",
+    HADIR: "Hadir",
+    TIDAK_HADIR: "Tidak Hadir",
+    TENTATIF: "Tentatif",
+  },
+
+  KEHADIRAN_STATUS: {
+    BELUM: "Belum Hadir",
+    SUDAH: "Sudah Hadir",
+  },
+
+  LOKASI_STATUS: {
+    DI_LUAR: "Di Luar",
+    DI_DALAM: "Di Dalam",
+  },
+
+  KATEGORI: ["VIP", "Dosen", "Orang Tua", "Wisudawan", "Undangan Umum"],
+};
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = CONFIG;
+}

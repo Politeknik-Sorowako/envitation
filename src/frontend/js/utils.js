@@ -127,17 +127,34 @@ const Utils = {
     const element = document.getElementById(elementId);
     if (!element) return;
 
+    element.classList.add("ecard-print-mode");
+
     html2canvas(element, {
       scale: 3,
       backgroundColor: "#ffffff",
       useCORS: true,
       imageSmoothingEnabled: false,
+      logging: false,
     }).then(canvas => {
+      element.classList.remove("ecard-print-mode");
+
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.min(255, data[i] * 1.15);
+        data[i + 1] = Math.min(255, data[i + 1] * 1.15);
+        data[i + 2] = Math.min(255, data[i + 2] * 1.15);
+      }
+      ctx.putImageData(imageData, 0, 0);
+
       const link = document.createElement("a");
       link.download = `${filename}.png`;
       link.href = canvas.toDataURL("image/png", 1.0);
       link.click();
       this.showToast("E-Card berhasil diunduh!", "success");
+    }).catch(() => {
+      element.classList.remove("ecard-print-mode");
     });
   },
 
@@ -145,12 +162,27 @@ const Utils = {
     const element = document.getElementById(elementId);
     if (!element) return;
 
+    element.classList.add("ecard-print-mode");
+
     html2canvas(element, {
       scale: 3,
       backgroundColor: "#ffffff",
       useCORS: true,
       imageSmoothingEnabled: false,
+      logging: false,
     }).then(canvas => {
+      element.classList.remove("ecard-print-mode");
+
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.min(255, data[i] * 1.15);
+        data[i + 1] = Math.min(255, data[i + 1] * 1.15);
+        data[i + 2] = Math.min(255, data[i + 2] * 1.15);
+      }
+      ctx.putImageData(imageData, 0, 0);
+
       const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jspdf.jsPDF({
         orientation: "portrait",
@@ -164,6 +196,8 @@ const Utils = {
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
       pdf.save(`${filename}.pdf`);
       this.showToast("E-Card PDF berhasil diunduh!", "success");
+    }).catch(() => {
+      element.classList.remove("ecard-print-mode");
     });
   },
 };

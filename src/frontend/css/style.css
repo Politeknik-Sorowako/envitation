@@ -1341,3 +1341,22 @@ tr:hover {
     border: 2px solid #000;
   }
 }
+
+/* ===== E-CARD PRINT MODE (for download) ===== */
+.ecard-print-mode .text-slate-400,
+.ecard-print-mode .text-slate-500 {
+  color: #334155 !important;
+}
+
+.ecard-print-mode .text-slate-300 {
+  color: #475569 !important;
+}
+
+.ecard-print-mode .ecard-qr {
+  border: 2px solid #e2e8f0;
+}
+
+.ecard-print-mode .gold-line,
+.ecard-print-mode .gold-line-thick {
+  opacity: 0.8;
+}

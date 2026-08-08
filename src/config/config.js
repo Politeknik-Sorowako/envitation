@@ -12,6 +12,7 @@ const CONFIG = {
     waktu: "Pkl. 07.00 WITA - selesai",
     tempat: "Gedung Ontaeluwu Sorowako",
     mapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4956.499576503582!2d121.34023167587378!3d-2.5200119382210002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2d90660fd59f2f81%3A0xe19138ac635a8ac0!2sOntaeluwu%20Meeting%20Hall!5e1!3m2!1sen!2sid!4v1786191149085!5m2!1sen!2sid",
+    mapsUrl: "https://www.google.com/maps/search/Ontaeluwu+Meeting+Hall+Sorowako/@-2.5200119,121.3402317,17z",
     deskripsi: "Dengan hormatnya kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara Wisuda Diploma III Angkatan XXXIII Politeknik Sorowako.",
     dresscode: "Pakaian Formal / Batik / Jas",
   },

@@ -24,7 +24,7 @@ const RSVP = {
     document.getElementById("waktu").textContent = e.waktu;
     document.getElementById("tempat").textContent = e.tempat;
     document.getElementById("dresscode").textContent = e.dresscode;
-    document.getElementById("map-link").href = e.mapsEmbedUrl.replace("embed?pb=", "place?");
+    document.getElementById("map-link").href = e.mapsUrl || e.mapsEmbedUrl;
     document.getElementById("footer-event").textContent = `${e.subjek} • ${e.tempat}`;
   },
 

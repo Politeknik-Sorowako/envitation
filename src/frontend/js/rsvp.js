@@ -88,8 +88,10 @@ const RSVP = {
 
   async verifyGuest() {
     const btn = document.getElementById("btn-verify");
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner w-5 h-5 border-2"></div> Memverifikasi...';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner w-5 h-5 border-2"></div> Memverifikasi...';
+    }
 
     const id = document.getElementById("input-id").value.trim();
     const nama = document.getElementById("input-nama").value.trim();
@@ -97,8 +99,11 @@ const RSVP = {
 
     if (!id && (!nama || !hp)) {
       Utils.showToast("Masukkan ID undangan atau Nama + No HP", "warning");
-      btn.disabled = false;
-      btn.textContent = "Verifikasi & Buka Undangan";
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Verifikasi & Buka Undangan";
+      }
+      this.hideLoading();
       return;
     }
 
@@ -113,10 +118,13 @@ const RSVP = {
       document.getElementById("verify-error").classList.remove("hidden");
       document.getElementById("verify-error-msg").textContent = result.message || "Tamu tidak ditemukan.";
       Utils.showToast(result.message || "Tamu tidak ditemukan.", "error");
+      this.hideLoading();
     }
 
-    btn.disabled = false;
-    btn.textContent = "Verifikasi & Buka Undangan";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Verifikasi & Buka Undangan";
+    }
   },
 
   showInvitation() {
@@ -131,6 +139,7 @@ const RSVP = {
       document.getElementById("pendamping-count").value = this.guest.jumlah_pendamping;
     }
 
+    this.hideLoading();
     document.getElementById("invitation-section").scrollIntoView({ behavior: "smooth" });
   },
 

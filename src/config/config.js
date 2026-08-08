@@ -37,6 +37,16 @@ const CONFIG = {
     retries: 2,
   },
 
+  BACKEND: {
+    type: "gas",
+    gas: {
+      url: "https://script.google.com/macros/s/AKfycbwqM793JFjKmZRCdvYAUBRGHpB_EfmI4AsqOS9aQ2Xva6tTFZ66uvBdHsuuqpj57jUU/exec",
+    },
+    sqlite: {
+      url: "http://localhost:3000",
+    },
+  },
+
   ADMIN: {
     pin: "202608",
     pinLabel: "Masukkan PIN Panitia",

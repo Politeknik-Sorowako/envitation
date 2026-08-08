@@ -1,0 +1,16 @@
+# SQLite databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+src/backend-sqlite/data/
+
+# Node modules
+src/backend-sqlite/node_modules/
+
+# Environment files
+src/backend-sqlite/.env
+
+# OS files
+.DS_Store
+Thumbs.db

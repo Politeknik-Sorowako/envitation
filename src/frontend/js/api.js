@@ -4,7 +4,10 @@
  */
 
 const API = {
-  baseUrl: CONFIG.API.baseUrl,
+  baseUrl: (function() {
+    const type = CONFIG.BACKEND.type;
+    return type === "sqlite" ? CONFIG.BACKEND.sqlite.url : CONFIG.BACKEND.gas.url;
+  })(),
 
   async call(action, params = {}, method = "GET") {
     const url = new URL(this.baseUrl);

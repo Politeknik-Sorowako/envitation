@@ -43,10 +43,21 @@ const Admin = {
   },
 
   saveSession(pin) {
+    let existingPin = null;
+    let existingToken = null;
+    try {
+      const raw = JSON.parse(sessionStorage.getItem("admin_session") || "{}");
+      existingPin = raw.pin || null;
+      existingToken = raw.token || null;
+    } catch (e) {}
+
+    const activePin = pin || existingPin;
+    if (!activePin) return;
+
     const session = {
-      token: "admin_" + Date.now(),
+      token: existingToken || ("admin_" + Date.now()),
       expiry: Date.now() + this.sessionExpiry,
-      pin: pin,
+      pin: activePin,
       tab: this.getCurrentTab(),
     };
     sessionStorage.setItem("admin_session", JSON.stringify(session));

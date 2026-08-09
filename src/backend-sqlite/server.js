@@ -36,7 +36,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: { success: false, message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -44,7 +44,7 @@ const generalLimiter = rateLimit({
 
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 500,
   message: { success: false, message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
   standardHeaders: true,
   legacyHeaders: false,

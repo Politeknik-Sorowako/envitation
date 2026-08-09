@@ -34,6 +34,13 @@ const API = {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
+          if (response.status === 429) {
+            try {
+              return await response.json();
+            } catch (e) {
+              return { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi nanti." };
+            }
+          }
           throw new Error(`HTTP ${response.status}`);
         }
 
@@ -75,6 +82,13 @@ const API = {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
+          if (response.status === 429) {
+            try {
+              return await response.json();
+            } catch (e) {
+              return { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi nanti." };
+            }
+          }
           throw new Error(`HTTP ${response.status}`);
         }
 

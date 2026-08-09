@@ -306,36 +306,49 @@ const Admin = {
     }
   },
 
+  isScanProcessing: false,
+
   async onScanSuccess(qrHash) {
-    if (!this.scanning) return;
+    if (!this.scanning || this.isScanProcessing) return;
 
     const now = Date.now();
-    if (qrHash === this.lastScannedHash && now - this.lastScanTime < this.scanCooldownMs) {
+    if (now - this.lastScanTime < this.scanCooldownMs) {
       return;
     }
 
-    this.lastScannedHash = qrHash;
+    this.isScanProcessing = true;
     this.lastScanTime = now;
+    this.lastScannedHash = qrHash;
 
-    let result;
-    switch (this.scannerMode) {
-      case "checkin": result = await API.checkIn(qrHash); break;
-      case "checkout": result = await API.checkOut(qrHash); break;
-      case "return": result = await API.checkInReturn(qrHash); break;
-      default: result = { success: false, message: "Mode scanner tidak valid" };
-    }
+    try {
+      let result;
+      switch (this.scannerMode) {
+        case "checkin": result = await API.checkIn(qrHash); break;
+        case "checkout": result = await API.checkOut(qrHash); break;
+        case "return": result = await API.checkInReturn(qrHash); break;
+        default: result = { success: false, message: "Mode scanner tidak valid" };
+      }
 
-    this.showScanFeedback(result);
-    this.showScanResult(result);
+      this.showScanFeedback(result);
+      this.showScanResult(result);
 
-    if (result.success) {
-      Utils.playSound("success");
-      Utils.vibrate([100, 50, 100]);
-      await this.loadStats();
-      await this.loadGuests();
-    } else {
-      Utils.playSound("error");
-      Utils.vibrate([200]);
+      if (result.success) {
+        Utils.playSound("success");
+        Utils.vibrate([100, 50, 100]);
+        await this.loadStats();
+        await this.loadGuests();
+      } else {
+        Utils.playSound("error");
+        Utils.vibrate([200]);
+      }
+    } catch (err) {
+      console.error("Scan error:", err);
+    } finally {
+      const elapsed = Date.now() - now;
+      const remainingCooldown = Math.max(0, this.scanCooldownMs - elapsed);
+      setTimeout(() => {
+        this.isScanProcessing = false;
+      }, remainingCooldown);
     }
   },
 

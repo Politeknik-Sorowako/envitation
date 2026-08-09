@@ -1,6 +1,5 @@
 const { run, get, all, generateQRHash, generateIdTamu, formatGuestRow, getTimestamp } = require('./database');
 
-// ===== INPUT SANITIZATION =====
 function sanitize(str, maxLength = 500) {
   if (typeof str !== 'string') return '';
   return str
@@ -32,7 +31,6 @@ function auditLog(action, ip, detail = '') {
   console.log(`[AUDIT] ${timestamp} | ${action} | ${ip} | ${detail}`);
 }
 
-// ===== GUEST VERIFICATION =====
 function verifyGuest(db, params) {
   const idTamu = sanitizeId(params.id);
   const nama = sanitize(params.nama || '', 100);
@@ -55,7 +53,6 @@ function verifyGuest(db, params) {
   return Promise.resolve({ success: false, message: 'Masukkan ID undangan atau Nama + No HP' });
 }
 
-// ===== RSVP SUBMISSION =====
 async function submitRSVP(db, params) {
   const idTamu = sanitizeId(params.id_tamu);
   const statusRsvp = params.status_rsvp;
@@ -87,7 +84,6 @@ async function submitRSVP(db, params) {
   };
 }
 
-// ===== CHECK-IN =====
 async function checkIn(db, params) {
   const qrHash = params.qr_hash;
   if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
@@ -120,7 +116,6 @@ async function checkIn(db, params) {
   };
 }
 
-// ===== CHECK-OUT =====
 async function checkOut(db, params) {
   const qrHash = params.qr_hash;
   if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
@@ -150,7 +145,6 @@ async function checkOut(db, params) {
   };
 }
 
-// ===== CHECK-IN RETURN =====
 async function checkInReturn(db, params) {
   const qrHash = params.qr_hash;
   if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
@@ -180,7 +174,6 @@ async function checkInReturn(db, params) {
   };
 }
 
-// ===== SEARCH GUESTS (Admin Only) =====
 async function searchGuests(db, params, adminPin) {
   const pin = params.pin;
   if (pin !== adminPin) {
@@ -198,7 +191,6 @@ async function searchGuests(db, params, adminPin) {
   return { success: true, guests: guests.map(formatGuestRow), total: guests.length };
 }
 
-// ===== GET STATS =====
 async function getStats(db) {
   const totalRow = await get(db, 'SELECT COUNT(*) as count FROM data_tamu');
   const hadirRow = await get(db, 'SELECT COUNT(*) as count FROM data_tamu WHERE status_rsvp = ?', ['Hadir']);
@@ -237,7 +229,6 @@ async function getStats(db) {
   };
 }
 
-// ===== ADD GUEST (Admin Only) =====
 async function addGuest(db, params, adminPin) {
   const pin = params.pin;
   if (pin !== adminPin) {
@@ -268,7 +259,6 @@ async function addGuest(db, params, adminPin) {
   };
 }
 
-// ===== IMPORT GUEST (Admin Only) =====
 async function importGuest(db, params, adminPin) {
   const pin = params.pin;
   if (pin !== adminPin) {
@@ -321,7 +311,6 @@ async function importGuest(db, params, adminPin) {
   };
 }
 
-// ===== GET GUEST =====
 async function getGuest(db, params) {
   const idTamu = sanitizeId(params.id_tamu);
   const qrHash = params.qr_hash && typeof params.qr_hash === 'string' && params.qr_hash.length <= 50 ? params.qr_hash : '';
@@ -344,7 +333,6 @@ async function getGuest(db, params) {
   return { success: false, message: 'Tamu tidak ditemukan.' };
 }
 
-// ===== UPDATE ADMIN NOTE (Admin Only) =====
 async function updateAdminNote(db, params, adminPin) {
   const pin = params.pin;
   if (pin !== adminPin) {
@@ -370,7 +358,6 @@ async function updateAdminNote(db, params, adminPin) {
   return { success: true, message: 'Catatan admin diperbarui.' };
 }
 
-// ===== ADD UCAPAN =====
 async function addUcapan(db, params) {
   const nama = sanitize(params.nama, 100);
   const ucapan = sanitize(params.ucapan, 500);
@@ -390,18 +377,15 @@ async function addUcapan(db, params) {
   return { success: true, message: 'Ucapan berhasil dikirim.' };
 }
 
-// ===== GET UCAPAN =====
 async function getUcapan(db) {
   const messages = await all(db, 'SELECT * FROM data_ucapan ORDER BY id DESC LIMIT 50');
   return { success: true, messages: messages };
 }
 
-// ===== VERIFY PIN =====
 function verifyPin(params, adminPin) {
   return params.pin === adminPin;
 }
 
-// ===== PARSE IDS =====
 function parseIds(raw) {
   if (Array.isArray(raw)) return raw.map(id => sanitizeId(id)).filter(Boolean);
   if (typeof raw === 'string' && raw) {
@@ -415,7 +399,6 @@ function parseIds(raw) {
   return [];
 }
 
-// ===== RESET STATUS (Admin Only) =====
 async function resetStatus(db, params, adminPin) {
   if (!verifyPin(params, adminPin)) {
     return { success: false, message: 'PIN admin tidak valid.' };
@@ -436,7 +419,6 @@ async function resetStatus(db, params, adminPin) {
   return { success: true, message: 'Status semua undangan telah direset.' };
 }
 
-// ===== DELETE GUEST (Admin Only) =====
 async function deleteGuest(db, params, adminPin) {
   if (!verifyPin(params, adminPin)) {
     return { success: false, message: 'PIN admin tidak valid.' };
@@ -465,7 +447,6 @@ async function deleteGuest(db, params, adminPin) {
   return { success: true, message: 'Undangan berhasil dihapus.', deleted: deleted };
 }
 
-// ===== DELETE GUESTS (Admin Only) =====
 async function deleteGuests(db, params, adminPin) {
   if (!verifyPin(params, adminPin)) {
     return { success: false, message: 'PIN admin tidak valid.' };
@@ -487,7 +468,6 @@ async function deleteGuests(db, params, adminPin) {
   return { success: true, message: `${total} undangan berhasil dihapus.`, deleted: total };
 }
 
-// ===== DELETE ALL GUESTS (Admin Only) =====
 async function deleteAllGuests(db, params, adminPin) {
   if (!verifyPin(params, adminPin)) {
     return { success: false, message: 'PIN admin tidak valid.' };
@@ -498,7 +478,6 @@ async function deleteAllGuests(db, params, adminPin) {
   return { success: true, message: 'Semua undangan telah dihapus.', deleted: r.changes };
 }
 
-// ===== VERIFY ADMIN =====
 function verifyAdmin(params, adminPin) {
   const pin = params.pin;
   if (pin === adminPin) {
@@ -507,12 +486,8 @@ function verifyAdmin(params, adminPin) {
   return { success: false, message: 'PIN tidak valid.' };
 }
 
-// ===== REGISTER ROUTES =====
-function registerRoutes(app, db, strictLimiter) {
+function registerRoutes(app, db, adminLimiter) {
   const ADMIN_PIN = process.env.ADMIN_PIN || '202608';
-
-  // Apply strict rate limit to all API routes
-  app.use('/', strictLimiter);
 
   app.get('/', (req, res) => {
     const action = req.query.action || '';
@@ -520,7 +495,7 @@ function registerRoutes(app, db, strictLimiter) {
       return res.json({ success: true, message: 'ENVITATION SQLite Backend is running.' });
     }
 
-    handleGetRequest(req, res, db, ADMIN_PIN);
+    handleGetRequest(req, res, db, ADMIN_PIN, adminLimiter);
   });
 
   app.post('/', (req, res) => {
@@ -528,9 +503,20 @@ function registerRoutes(app, db, strictLimiter) {
   });
 }
 
-// ===== HANDLE GET REQUESTS =====
-async function handleGetRequest(req, res, db, ADMIN_PIN) {
+async function handleGetRequest(req, res, db, ADMIN_PIN, adminLimiter) {
   const action = req.query.action || '';
+
+  const adminActions = ['search', 'verifyAdmin'];
+  if (adminActions.includes(action)) {
+    adminLimiter(req, res, async () => {
+      await processGetAction(req, res, db, ADMIN_PIN, action);
+    });
+  } else {
+    await processGetAction(req, res, db, ADMIN_PIN, action);
+  }
+}
+
+async function processGetAction(req, res, db, ADMIN_PIN, action) {
   let result;
 
   try {
@@ -564,12 +550,10 @@ async function handleGetRequest(req, res, db, ADMIN_PIN) {
   res.json(result);
 }
 
-// ===== HANDLE POST REQUESTS =====
 async function handlePostRequest(req, res, db, ADMIN_PIN) {
   const action = req.body.action || '';
   let result;
 
-  // Attach IP for audit logging
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
   req.body._ip = ip;
 

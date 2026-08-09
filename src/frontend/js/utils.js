@@ -197,7 +197,7 @@ const Utils = {
   },
 
   getShareUrl(guest) {
-    const base = window.location.origin + "/ecard";
+    const base = window.location.origin + "/frontend/ecard.html";
     return `${base}?id=${encodeURIComponent(guest.id_tamu)}&qr=${encodeURIComponent(guest.qr_code_hash)}`;
   },
 

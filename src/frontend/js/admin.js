@@ -30,7 +30,7 @@ const Admin = {
 
   getSession() {
     try {
-      const data = JSON.parse(localStorage.getItem("admin_session") || "{}");
+      const data = JSON.parse(sessionStorage.getItem("admin_session") || "{}");
       if (!data.token || !data.expiry || !data.pin) return null;
       const valid = Date.now() < data.expiry;
       return { ...data, valid };
@@ -46,11 +46,11 @@ const Admin = {
       pin: pin,
       tab: this.getCurrentTab(),
     };
-    localStorage.setItem("admin_session", JSON.stringify(session));
+    sessionStorage.setItem("admin_session", JSON.stringify(session));
   },
 
   clearSession() {
-    localStorage.removeItem("admin_session");
+    sessionStorage.removeItem("admin_session");
   },
 
   getSessionPin() {

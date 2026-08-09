@@ -1,19 +1,25 @@
 require('dotenv').config();
 
+process.env.TZ = process.env.TZ || 'Asia/Makassar';
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const { initDatabase } = require('./database');
 const { registerRoutes } = require('./routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.SQLITE_DB_PATH || path.join(__dirname, 'data', 'envitation.db');
-
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://envitation.politekniksorowako.ac.id';
 
-// Security: CORS restriction
+app.use(helmet({
+  frameguard: { action: 'sameorigin' },
+  crossOriginEmbedderPolicy: false,
+}));
+
 app.use(cors({
   origin: ALLOWED_ORIGIN,
   methods: ['GET', 'POST'],
@@ -21,11 +27,11 @@ app.use(cors({
   credentials: false,
 }));
 
-// Security: Body size limits
+app.disable('x-powered-by');
+
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Security: Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -34,7 +40,7 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const strictLimiter = rateLimit({
+const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: { success: false, message: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
@@ -44,21 +50,9 @@ const strictLimiter = rateLimit({
 
 app.use(generalLimiter);
 
-// Security: Hide X-Powered-By
-app.disable('x-powered-by');
-
-// Security: Basic security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  next();
-});
-
 const db = initDatabase(DB_PATH);
 
-registerRoutes(app, db, strictLimiter);
+registerRoutes(app, db, adminLimiter);
 
 app.listen(PORT, () => {
   console.log('=========================================');
@@ -67,6 +61,7 @@ app.listen(PORT, () => {
   console.log(`  URL:      http://localhost:${PORT}`);
   console.log(`  Database: ${DB_PATH}`);
   console.log(`  CORS:     ${ALLOWED_ORIGIN}`);
+  console.log(`  TZ:       ${process.env.TZ}`);
   console.log('=========================================');
 });
 

@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Card Undangan - ENVITATION</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/frontend/css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="/config/config.js?v=4"></script>
-  <script src="/js/utils.js?v=4"></script>
-  <script src="/js/api.js?v=4"></script>
+  <script src="/frontend/js/utils.js?v=4"></script>
+  <script src="/frontend/js/api.js?v=4"></script>
   <style>
     .hero-bg {
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, #334155 100%);
@@ -34,7 +34,7 @@
 
       <!-- Back Button -->
       <div class="mb-4">
-        <a href="/" class="text-slate-600 hover:text-slate-900 text-sm inline-flex items-center gap-1">
+        <a href="/frontend/index.html" class="text-slate-600 hover:text-slate-900 text-sm inline-flex items-center gap-1">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
           Kembali ke Undangan
         </a>
@@ -45,7 +45,7 @@
 
       <!-- E-Card -->
       <div id="ecard-container" class="ecard fade-in">
-        <img src="/images/logo.png" alt="Logo" class="ecard-logo drop-shadow" onerror="this.style.display='none'">
+        <img src="/frontend/images/logo.png" alt="Logo" class="ecard-logo drop-shadow" onerror="this.style.display='none'">
         <div class="mb-2">
           <p class="text-amber-600 text-xs uppercase tracking-widest">E-Card Undangan</p>
           <p class="text-slate-700 text-xs" id="ec-penyelenggara"></p>
@@ -106,7 +106,7 @@
 
       if (!id && !qrHash) {
         Utils.showToast("ID atau QR Hash diperlukan", "error");
-        setTimeout(() => window.location.href = "index.html", 2000);
+        setTimeout(() => window.location.href = "/frontend/index.html", 2000);
         return;
       }
 
@@ -114,7 +114,7 @@
 
       if (!result.success) {
         Utils.showToast("Tamu tidak ditemukan", "error");
-        setTimeout(() => window.location.href = "index.html", 2000);
+        setTimeout(() => window.location.href = "/frontend/index.html", 2000);
         return;
       }
 

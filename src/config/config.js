@@ -33,7 +33,7 @@ const CONFIG = {
   },
 
   API: {
-    baseUrl: "https://envitation.politekniksorowako.ac.id/api",
+    baseUrl: "https://envitation.politekniksorowako.ac.id/api/",
     timeout: 15000,
     retries: 2,
   },
@@ -44,15 +44,15 @@ const CONFIG = {
       url: "https://script.google.com/macros/s/AKfycbwqM793JFjKmZRCdvYAUBRGHpB_EfmI4AsqOS9aQ2Xva6tTFZ66uvBdHsuuqpj57jUU/exec",
     },
     sqlite: {
-      url: "https://envitation.politekniksorowako.ac.id/api",
+      url: "https://envitation.politekniksorowako.ac.id/api/",
     },
   },
 
   ADMIN: {
     // SECURITY: PIN admin TIDAK disimpan di frontend.
     // PIN hanya ada di backend (.env) dan diminta dari user saat login.
-    // Setelah login berhasil, PIN disimpan di session storage dan digunakan
-    // untuk semua operasi admin. PIN dihapus saat logout.
+    // Setelah login berhasil, PIN disimpan di sessionStorage dan digunakan
+    // untuk semua operasi admin. PIN dihapus saat logout/tab ditutup.
     pinLabel: "Masukkan PIN Panitia",
   },
 

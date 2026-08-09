@@ -54,6 +54,18 @@ function handleRequest(e) {
       case "updateAdminNote":
         result = updateAdminNote(params);
         break;
+      case "resetStatus":
+        result = resetStatus(params);
+        break;
+      case "deleteGuest":
+        result = deleteGuest(params);
+        break;
+      case "deleteGuests":
+        result = deleteGuests(params);
+        break;
+      case "deleteAllGuests":
+        result = deleteAllGuests(params);
+        break;
       case "verifyAdmin":
         result = verifyAdmin(params);
         break;
@@ -555,6 +567,109 @@ function verifyAdmin(params) {
     return { success: true, message: "PIN valid." };
   }
   return { success: false, message: "PIN tidak valid." };
+}
+
+function parseIds(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string" && raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function resetStatus(params) {
+  if (params.pin !== ADMIN_PIN) {
+    return { success: false, message: "PIN admin tidak valid." };
+  }
+
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    sheet.getRange(i + 1, 6).setValue("Belum Konfirmasi");
+    sheet.getRange(i + 1, 7).setValue(0);
+    sheet.getRange(i + 1, 9).setValue("Belum Hadir");
+    sheet.getRange(i + 1, 10).setValue("Di Luar");
+    sheet.getRange(i + 1, 11).setValue("");
+    sheet.getRange(i + 1, 12).setValue("");
+  }
+
+  return { success: true, message: "Status semua undangan telah direset." };
+}
+
+function deleteGuest(params) {
+  if (params.pin !== ADMIN_PIN) {
+    return { success: false, message: "PIN admin tidak valid." };
+  }
+
+  const idTamu = params.id_tamu || "";
+  const qrHash = params.qr_hash || "";
+  if (!idTamu && !qrHash) {
+    return { success: false, message: "ID tamu atau QR hash wajib diisi." };
+  }
+
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  let row = -1;
+  for (let i = 1; i < data.length; i++) {
+    if ((idTamu && data[i][0] === idTamu) || (qrHash && data[i][7] === qrHash)) {
+      row = i + 1;
+      break;
+    }
+  }
+
+  if (row < 0) {
+    return { success: false, message: "Tamu tidak ditemukan." };
+  }
+
+  sheet.deleteRow(row);
+  return { success: true, message: "Undangan berhasil dihapus.", deleted: 1 };
+}
+
+function deleteGuests(params) {
+  if (params.pin !== ADMIN_PIN) {
+    return { success: false, message: "PIN admin tidak valid." };
+  }
+
+  const ids = parseIds(params.ids);
+  if (ids.length === 0) {
+    return { success: false, message: "Tidak ada tamu yang dipilih." };
+  }
+
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  const idSet = {};
+  ids.forEach((id) => (idSet[id] = true));
+
+  let deleted = 0;
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (idSet[data[i][0]]) {
+      sheet.deleteRow(i + 1);
+      deleted++;
+    }
+  }
+
+  return { success: true, message: deleted + " undangan berhasil dihapus.", deleted: deleted };
+}
+
+function deleteAllGuests(params) {
+  if (params.pin !== ADMIN_PIN) {
+    return { success: false, message: "PIN admin tidak valid." };
+  }
+
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  let deleted = 0;
+  for (let i = data.length - 1; i >= 1; i--) {
+    sheet.deleteRow(i + 1);
+    deleted++;
+  }
+
+  return { success: true, message: "Semua undangan telah dihapus.", deleted: deleted };
 }
 
 function getUcapanSheet() {

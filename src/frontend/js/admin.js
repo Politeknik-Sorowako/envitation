@@ -194,13 +194,19 @@ const Admin = {
   },
 
   renderGuestTable(guests) {
+    this.renderedGuests = guests;
     const tbody = document.getElementById("guest-table-body");
+    const selectAll = document.getElementById("select-all");
+    if (selectAll) selectAll.checked = false;
+    this.updateSelectionInfo();
+
     if (guests.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400">Tidak ada data tamu</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">Tidak ada data tamu</td></tr>';
       return;
     }
     tbody.innerHTML = guests.map(g => `
       <tr>
+        <td class="text-center"><input type="checkbox" class="row-check" data-id="${g.id_tamu}" onchange="Admin.updateSelectionInfo()"></td>
         <td class="text-xs font-mono">${g.id_tamu}</td>
         <td class="font-medium text-sm">${g.nama_tamu}</td>
         <td class="text-sm">${g.instansi_kategori}</td>
@@ -208,9 +214,31 @@ const Admin = {
         <td class="text-sm text-center">${g.jumlah_pendamping}</td>
         <td>${Utils.getKehadiranBadge(g.status_kehadiran)}</td>
         <td>${Utils.getLokasiBadge(g.status_lokasi)}</td>
-        <td><button class="btn btn-primary text-xs py-1 px-2" onclick="Admin.showGuestDetail('${g.qr_code_hash}')">Detail</button></td>
+        <td>
+          <button class="btn btn-primary text-xs py-1 px-2" onclick="Admin.showGuestDetail('${g.qr_code_hash}')">Detail</button>
+          <button class="btn btn-danger text-xs py-1 px-2" onclick="Admin.deleteSingle('${g.id_tamu}')">Hapus</button>
+        </td>
       </tr>
     `).join("");
+  },
+
+    getSelectedIds() {
+    const checks = document.querySelectorAll(".row-check:checked");
+    return Array.from(checks).map(c => c.dataset.id);
+  },
+
+  updateSelectionInfo() {
+    const count = this.getSelectedIds().length;
+    const info = document.getElementById("selection-info");
+    const selectAll = document.getElementById("select-all");
+    const total = document.querySelectorAll(".row-check").length;
+    if (selectAll) selectAll.checked = total > 0 && count === total;
+    if (info) info.textContent = count > 0 ? `${count} tamu dipilih` : (this.allGuests.length + " tamu terdaftar");
+  },
+
+  toggleAllSelect(el) {
+    document.querySelectorAll(".row-check").forEach(c => c.checked = el.checked);
+    this.updateSelectionInfo();
   },
 
   async searchGuests(query) {
@@ -542,6 +570,57 @@ const Admin = {
     const result = await API.updateAdminNote(CONFIG.ADMIN.pin, this.currentGuest.qr_code_hash, note);
     if (result.success) { Utils.showToast("Catatan disimpan", "success"); this.currentGuest.catatan_admin = note; }
     else Utils.showToast(result.message, "error");
+  },
+
+  // ===== RESET & DELETE =====
+  async resetStatus() {
+    if (!confirm("Reset status SEMUA undangan ke awal (RSVP: Belum Konfirmasi, Kehadiran: Belum Hadir, Lokasi: Di Luar)?\nTindakan ini tidak dapat dibatalkan.")) return;
+    const result = await API.resetStatus(CONFIG.ADMIN.pin);
+    if (result.success) {
+      Utils.showToast("Status semua undangan telah direset", "success");
+      await this.loadStats();
+      await this.loadGuests();
+    } else {
+      Utils.showToast(result.message, "error");
+    }
+  },
+
+  async deleteSingle(idTamu) {
+    if (!confirm(`Hapus undangan ${idTamu}?\nTindakan ini tidak dapat dibatalkan.`)) return;
+    const result = await API.deleteGuest(CONFIG.ADMIN.pin, idTamu);
+    if (result.success) {
+      Utils.showToast(`Undangan ${idTamu} dihapus`, "success");
+      await this.loadStats();
+      await this.loadGuests();
+    } else {
+      Utils.showToast(result.message, "error");
+    }
+  },
+
+  async deleteSelected() {
+    const ids = this.getSelectedIds();
+    if (ids.length === 0) { Utils.showToast("Tidak ada tamu yang dipilih", "warning"); return; }
+    if (!confirm(`Hapus ${ids.length} undangan yang terpilih?\nTindakan ini tidak dapat dibatalkan.`)) return;
+    const result = await API.deleteGuests(CONFIG.ADMIN.pin, ids);
+    if (result.success) {
+      Utils.showToast(result.message, "success");
+      await this.loadStats();
+      await this.loadGuests();
+    } else {
+      Utils.showToast(result.message, "error");
+    }
+  },
+
+  async deleteAll() {
+    if (!confirm("Hapus SEMUA data undangan?\nTindakan ini tidak dapat dibatalkan.")) return;
+    const result = await API.deleteAllGuests(CONFIG.ADMIN.pin);
+    if (result.success) {
+      Utils.showToast(result.message, "success");
+      await this.loadStats();
+      await this.loadGuests();
+    } else {
+      Utils.showToast(result.message, "error");
+    }
   },
 
   // ===== GUESTBOOK (Admin View) =====

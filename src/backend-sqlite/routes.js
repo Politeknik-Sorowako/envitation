@@ -322,6 +322,95 @@ async function getUcapan(db) {
   return { success: true, messages: messages };
 }
 
+function verifyPin(params, adminPin) {
+  return params.pin === adminPin;
+}
+
+function parseIds(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string' && raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+async function resetStatus(db, params, adminPin) {
+  if (!verifyPin(params, adminPin)) {
+    return { success: false, message: 'PIN admin tidak valid.' };
+  }
+
+  await run(db, `UPDATE data_tamu SET
+    status_rsvp = 'Belum Konfirmasi',
+    jumlah_pendamping = 0,
+    status_kehadiran = 'Belum Hadir',
+    status_lokasi = 'Di Luar',
+    waktu_checkin = '',
+    komentar_rsvp = '',
+    updated_at = datetime('now', 'localtime')
+  WHERE 1`);
+
+  return { success: true, message: 'Status semua undangan telah direset.' };
+}
+
+async function deleteGuest(db, params, adminPin) {
+  if (!verifyPin(params, adminPin)) {
+    return { success: false, message: 'PIN admin tidak valid.' };
+  }
+
+  const idTamu = params.id_tamu || '';
+  const qrHash = params.qr_hash || '';
+  if (!idTamu && !qrHash) {
+    return { success: false, message: 'ID tamu atau QR hash wajib diisi.' };
+  }
+
+  let deleted = 0;
+  if (idTamu) {
+    const r = await run(db, 'DELETE FROM data_tamu WHERE id_tamu = ?', [idTamu]);
+    deleted = r.changes;
+  } else {
+    const r = await run(db, 'DELETE FROM data_tamu WHERE qr_code_hash = ?', [qrHash]);
+    deleted = r.changes;
+  }
+
+  if (deleted === 0) {
+    return { success: false, message: 'Tamu tidak ditemukan.' };
+  }
+  return { success: true, message: 'Undangan berhasil dihapus.', deleted: deleted };
+}
+
+async function deleteGuests(db, params, adminPin) {
+  if (!verifyPin(params, adminPin)) {
+    return { success: false, message: 'PIN admin tidak valid.' };
+  }
+
+  const ids = parseIds(params.ids);
+  if (ids.length === 0) {
+    return { success: false, message: 'Tidak ada tamu yang dipilih.' };
+  }
+
+  let total = 0;
+  for (const idTamu of ids) {
+    const r = await run(db, 'DELETE FROM data_tamu WHERE id_tamu = ?', [idTamu]);
+    total += r.changes;
+  }
+
+  return { success: true, message: `${total} undangan berhasil dihapus.`, deleted: total };
+}
+
+async function deleteAllGuests(db, params, adminPin) {
+  if (!verifyPin(params, adminPin)) {
+    return { success: false, message: 'PIN admin tidak valid.' };
+  }
+
+  const r = await run(db, 'DELETE FROM data_tamu WHERE 1');
+  return { success: true, message: 'Semua undangan telah dihapus.', deleted: r.changes };
+}
+
 function verifyAdmin(params, adminPin) {
   const pin = params.pin;
   if (pin === adminPin) {
@@ -407,6 +496,18 @@ async function handlePostRequest(req, res, db, ADMIN_PIN) {
         break;
       case 'updateAdminNote':
         result = await updateAdminNote(db, req.body, ADMIN_PIN);
+        break;
+      case 'resetStatus':
+        result = await resetStatus(db, req.body, ADMIN_PIN);
+        break;
+      case 'deleteGuest':
+        result = await deleteGuest(db, req.body, ADMIN_PIN);
+        break;
+      case 'deleteGuests':
+        result = await deleteGuests(db, req.body, ADMIN_PIN);
+        break;
+      case 'deleteAllGuests':
+        result = await deleteAllGuests(db, req.body, ADMIN_PIN);
         break;
       case 'addUcapan':
         result = await addUcapan(db, req.body);

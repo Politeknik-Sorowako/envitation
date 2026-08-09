@@ -190,4 +190,26 @@ const API = {
   getUcapan() {
     return this.call("getUcapan");
   },
+
+  resetStatus(pin) {
+    return this.post("resetStatus", { pin: pin });
+  },
+
+  deleteGuest(pin, idTamu) {
+    return this.post("deleteGuest", {
+      pin: pin,
+      id_tamu: idTamu,
+    });
+  },
+
+  deleteGuests(pin, ids) {
+    return this.post("deleteGuests", {
+      pin: pin,
+      ids: JSON.stringify(ids),
+    });
+  },
+
+  deleteAllGuests(pin) {
+    return this.post("deleteAllGuests", { pin: pin });
+  },
 };

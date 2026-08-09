@@ -197,8 +197,8 @@ const Utils = {
   },
 
   getShareUrl(guest) {
-    const base = window.location.origin + window.location.pathname.replace(/index\.html$/, "");
-    return `${base}ecard.html?id=${encodeURIComponent(guest.id_tamu)}&qr=${encodeURIComponent(guest.qr_code_hash)}`;
+    const base = window.location.origin + "/frontend/ecard.html";
+    return `${base}?id=${encodeURIComponent(guest.id_tamu)}&qr=${encodeURIComponent(guest.qr_code_hash)}`;
   },
 
   shareToWhatsApp(guest) {

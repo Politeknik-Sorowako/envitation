@@ -30,8 +30,8 @@ const Admin = {
 
   getSession() {
     try {
-      const data = JSON.parse(localStorage.getItem("admin_session") || "{}");
-      if (!data.token || !data.expiry) return null;
+      const data = JSON.parse(sessionStorage.getItem("admin_session") || "{}");
+      if (!data.token || !data.expiry || !data.pin) return null;
       const valid = Date.now() < data.expiry;
       return { ...data, valid };
     } catch {
@@ -39,17 +39,23 @@ const Admin = {
     }
   },
 
-  saveSession() {
+  saveSession(pin) {
     const session = {
       token: "admin_" + Date.now(),
       expiry: Date.now() + this.sessionExpiry,
+      pin: pin,
       tab: this.getCurrentTab(),
     };
-    localStorage.setItem("admin_session", JSON.stringify(session));
+    sessionStorage.setItem("admin_session", JSON.stringify(session));
   },
 
   clearSession() {
-    localStorage.removeItem("admin_session");
+    sessionStorage.removeItem("admin_session");
+  },
+
+  getSessionPin() {
+    const session = this.getSession();
+    return session ? session.pin : null;
   },
 
   getCurrentTab() {
@@ -88,7 +94,7 @@ const Admin = {
 
     const result = await API.verifyAdmin(pin);
     if (result.success) {
-      this.saveSession();
+      this.saveSession(pin);
       this.showPanel();
     } else {
       document.getElementById("login-error").classList.remove("hidden");
@@ -187,7 +193,7 @@ const Admin = {
   },
 
   async loadGuests() {
-    const result = await API.search("");
+    const result = await API.search("", this.getSessionPin());
     if (!result.success) return;
     this.allGuests = result.guests;
     this.renderGuestTable(this.allGuests);
@@ -243,7 +249,7 @@ const Admin = {
 
   async searchGuests(query) {
     if (!query.trim()) { this.renderGuestTable(this.allGuests); return; }
-    const result = await API.search(query);
+    const result = await API.search(query, this.getSessionPin());
     if (result.success) this.renderGuestTable(result.guests);
   },
 
@@ -367,7 +373,7 @@ const Admin = {
 
     if (!nama) { Utils.showToast("Nama tamu wajib diisi", "warning"); return; }
 
-    const result = await API.addGuest(CONFIG.ADMIN.pin, nama, instansi, hp, email);
+    const result = await API.addGuest(this.getSessionPin(), nama, instansi, hp, email);
     if (result.success) {
       Utils.showToast(`Tamu "${nama}" berhasil ditambahkan! ID: ${result.guest.id_tamu}`, "success");
       this.hideAddGuestForm();
@@ -470,7 +476,7 @@ const Admin = {
       progressText.textContent = `${i + 1}/${total}`;
 
       try {
-        const result = await API.importGuest(CONFIG.ADMIN.pin, nama,
+        const result = await API.importGuest(this.getSessionPin(), nama,
           rec.instansi_kategori || 'Undangan Umum', rec.no_hp || '', rec.email || '',
           rec.status_rsvp || 'Belum Konfirmasi', parseInt(rec.jumlah_pendamping || 0) || 0,
           rec.qr_code_hash || '', rec.status_kehadiran || 'Belum Hadir',
@@ -567,7 +573,7 @@ const Admin = {
   async saveAdminNote() {
     if (!this.currentGuest) return;
     const note = document.getElementById("admin-note-input").value.trim();
-    const result = await API.updateAdminNote(CONFIG.ADMIN.pin, this.currentGuest.qr_code_hash, note);
+    const result = await API.updateAdminNote(this.getSessionPin(), this.currentGuest.qr_code_hash, note);
     if (result.success) { Utils.showToast("Catatan disimpan", "success"); this.currentGuest.catatan_admin = note; }
     else Utils.showToast(result.message, "error");
   },
@@ -575,7 +581,7 @@ const Admin = {
   // ===== RESET & DELETE =====
   async resetStatus() {
     if (!confirm("Reset status SEMUA undangan ke awal (RSVP: Belum Konfirmasi, Kehadiran: Belum Hadir, Lokasi: Di Luar)?\nTindakan ini tidak dapat dibatalkan.")) return;
-    const result = await API.resetStatus(CONFIG.ADMIN.pin);
+    const result = await API.resetStatus(this.getSessionPin());
     if (result.success) {
       Utils.showToast("Status semua undangan telah direset", "success");
       await this.loadStats();
@@ -587,7 +593,7 @@ const Admin = {
 
   async deleteSingle(idTamu) {
     if (!confirm(`Hapus undangan ${idTamu}?\nTindakan ini tidak dapat dibatalkan.`)) return;
-    const result = await API.deleteGuest(CONFIG.ADMIN.pin, idTamu);
+    const result = await API.deleteGuest(this.getSessionPin(), idTamu);
     if (result.success) {
       Utils.showToast(`Undangan ${idTamu} dihapus`, "success");
       await this.loadStats();
@@ -601,7 +607,7 @@ const Admin = {
     const ids = this.getSelectedIds();
     if (ids.length === 0) { Utils.showToast("Tidak ada tamu yang dipilih", "warning"); return; }
     if (!confirm(`Hapus ${ids.length} undangan yang terpilih?\nTindakan ini tidak dapat dibatalkan.`)) return;
-    const result = await API.deleteGuests(CONFIG.ADMIN.pin, ids);
+    const result = await API.deleteGuests(this.getSessionPin(), ids);
     if (result.success) {
       Utils.showToast(result.message, "success");
       await this.loadStats();
@@ -613,7 +619,7 @@ const Admin = {
 
   async deleteAll() {
     if (!confirm("Hapus SEMUA data undangan?\nTindakan ini tidak dapat dibatalkan.")) return;
-    const result = await API.deleteAllGuests(CONFIG.ADMIN.pin);
+    const result = await API.deleteAllGuests(this.getSessionPin());
     if (result.success) {
       Utils.showToast(result.message, "success");
       await this.loadStats();

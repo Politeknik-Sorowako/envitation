@@ -1,9 +1,40 @@
 const { run, get, all, generateQRHash, generateIdTamu, formatGuestRow, getTimestamp } = require('./database');
 
+function sanitize(str, maxLength = 500) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c] || c))
+    .trim()
+    .slice(0, maxLength);
+}
+
+function sanitizeId(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
+}
+
+function sanitizePhone(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[^0-9+\-() ]/g, '').slice(0, 20);
+}
+
+function sanitizeEmail(str) {
+  if (typeof str !== 'string') return '';
+  const cleaned = str.replace(/[<>&"']/g, '').trim().slice(0, 100);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) return '';
+  return cleaned;
+}
+
+function auditLog(action, ip, detail = '') {
+  const timestamp = new Date().toISOString();
+  console.log(`[AUDIT] ${timestamp} | ${action} | ${ip} | ${detail}`);
+}
+
 function verifyGuest(db, params) {
-  const idTamu = params.id;
-  const nama = params.nama;
-  const noHp = params.no_hp;
+  const idTamu = sanitizeId(params.id);
+  const nama = sanitize(params.nama || '', 100);
+  const noHp = sanitizePhone(params.no_hp);
 
   if (idTamu) {
     return get(db, 'SELECT * FROM data_tamu WHERE id_tamu = ?', [idTamu]).then(row => {
@@ -23,14 +54,18 @@ function verifyGuest(db, params) {
 }
 
 async function submitRSVP(db, params) {
-  const idTamu = params.id_tamu;
+  const idTamu = sanitizeId(params.id_tamu);
   const statusRsvp = params.status_rsvp;
-  const jumlahPendamping = parseInt(params.jumlah_pendamping) || 0;
-  const komentar = params.komentar || '';
+  const jumlahPendamping = Math.min(parseInt(params.jumlah_pendamping) || 0, 10);
+  const komentar = sanitize(params.komentar || '', 500);
 
   const validStatus = ['Hadir', 'Tidak Hadir', 'Tentatif'];
   if (!validStatus.includes(statusRsvp)) {
     return { success: false, message: 'Status RSVP tidak valid.' };
+  }
+
+  if (!idTamu) {
+    return { success: false, message: 'ID tamu tidak valid.' };
   }
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE id_tamu = ?', [idTamu]);
@@ -51,8 +86,8 @@ async function submitRSVP(db, params) {
 
 async function checkIn(db, params) {
   const qrHash = params.qr_hash;
-  if (!qrHash) {
-    return { success: false, message: 'QR Hash tidak ditemukan.' };
+  if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
+    return { success: false, message: 'QR Hash tidak valid.' };
   }
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE qr_code_hash = ?', [qrHash]);
@@ -83,8 +118,8 @@ async function checkIn(db, params) {
 
 async function checkOut(db, params) {
   const qrHash = params.qr_hash;
-  if (!qrHash) {
-    return { success: false, message: 'QR Hash tidak ditemukan.' };
+  if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
+    return { success: false, message: 'QR Hash tidak valid.' };
   }
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE qr_code_hash = ?', [qrHash]);
@@ -112,8 +147,8 @@ async function checkOut(db, params) {
 
 async function checkInReturn(db, params) {
   const qrHash = params.qr_hash;
-  if (!qrHash) {
-    return { success: false, message: 'QR Hash tidak ditemukan.' };
+  if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
+    return { success: false, message: 'QR Hash tidak valid.' };
   }
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE qr_code_hash = ?', [qrHash]);
@@ -139,8 +174,13 @@ async function checkInReturn(db, params) {
   };
 }
 
-async function searchGuests(db, params) {
-  const query = (params.q || '').toLowerCase();
+async function searchGuests(db, params, adminPin) {
+  const pin = params.pin;
+  if (pin !== adminPin) {
+    return { success: false, message: 'Akses ditolak. PIN admin diperlukan.' };
+  }
+
+  const query = (params.q || '').toLowerCase().slice(0, 100);
 
   if (!query) {
     const guests = await all(db, 'SELECT * FROM data_tamu ORDER BY id ASC');
@@ -195,10 +235,10 @@ async function addGuest(db, params, adminPin) {
     return { success: false, message: 'PIN admin tidak valid.' };
   }
 
-  const nama = params.nama_tamu;
-  const instansi = params.instansi_kategori || 'Undangan Umum';
-  const noHp = params.no_hp || '';
-  const email = params.email || '';
+  const nama = sanitize(params.nama_tamu, 100);
+  const instansi = sanitize(params.instansi_kategori || 'Undangan Umum', 50);
+  const noHp = sanitizePhone(params.no_hp);
+  const email = sanitizeEmail(params.email);
 
   if (!nama) {
     return { success: false, message: 'Nama tamu wajib diisi.' };
@@ -208,6 +248,8 @@ async function addGuest(db, params, adminPin) {
   const qrHash = generateQRHash();
 
   await run(db, 'INSERT INTO data_tamu (id_tamu, nama_tamu, instansi_kategori, no_hp, email, qr_code_hash, catatan_admin) VALUES (?, ?, ?, ?, ?, ?, ?)', [idTamu, nama, instansi, noHp, email, qrHash, 'Tambahan on-the-spot']);
+
+  auditLog('ADD_GUEST', params._ip || 'unknown', `nama=${nama}, id=${idTamu}`);
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE id_tamu = ?', [idTamu]);
   return {
@@ -223,12 +265,12 @@ async function importGuest(db, params, adminPin) {
     return { success: false, message: 'PIN admin tidak valid.' };
   }
 
-  const nama = params.nama_tamu;
+  const nama = sanitize(params.nama_tamu, 100);
   if (!nama) {
     return { success: false, message: 'Nama tamu wajib diisi.' };
   }
 
-  const existingIdTamu = params.id_tamu || '';
+  const existingIdTamu = sanitizeId(params.id_tamu);
   const existing = existingIdTamu ? await get(db, 'SELECT id FROM data_tamu WHERE id_tamu = ?', [existingIdTamu]) : null;
 
   if (existing) {
@@ -236,7 +278,7 @@ async function importGuest(db, params, adminPin) {
   }
 
   const idTamu = existingIdTamu || await generateIdTamu(db);
-  const qrHash = params.qr_code_hash || generateQRHash();
+  const qrHash = params.qr_code_hash && typeof params.qr_code_hash === 'string' && params.qr_code_hash.length <= 50 ? params.qr_code_hash : generateQRHash();
 
   await run(db, `INSERT INTO data_tamu (
     id_tamu, nama_tamu, instansi_kategori, no_hp, email,
@@ -246,18 +288,20 @@ async function importGuest(db, params, adminPin) {
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
     idTamu,
     nama,
-    params.instansi_kategori || 'Undangan Umum',
-    params.no_hp || '',
-    params.email || '',
-    params.status_rsvp || 'Belum Konfirmasi',
-    parseInt(params.jumlah_pendamping) || 0,
+    sanitize(params.instansi_kategori || 'Undangan Umum', 50),
+    sanitizePhone(params.no_hp),
+    sanitizeEmail(params.email),
+    ['Hadir', 'Tidak Hadir', 'Tentatif', 'Belum Konfirmasi'].includes(params.status_rsvp) ? params.status_rsvp : 'Belum Konfirmasi',
+    Math.min(parseInt(params.jumlah_pendamping) || 0, 10),
     qrHash,
-    params.status_kehadiran || 'Belum Hadir',
-    params.status_lokasi || 'Di Luar',
+    ['Sudah Hadir', 'Belum Hadir'].includes(params.status_kehadiran) ? params.status_kehadiran : 'Belum Hadir',
+    ['Di Dalam', 'Di Luar'].includes(params.status_lokasi) ? params.status_lokasi : 'Di Luar',
     params.waktu_checkin || '',
-    params.komentar_rsvp || '',
-    params.catatan_admin || '',
+    sanitize(params.komentar_rsvp || '', 500),
+    sanitize(params.catatan_admin || '', 500),
   ]);
+
+  auditLog('IMPORT_GUEST', params._ip || 'unknown', `nama=${nama}, id=${idTamu}`);
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE id_tamu = ?', [idTamu]);
   return {
@@ -268,8 +312,12 @@ async function importGuest(db, params, adminPin) {
 }
 
 async function getGuest(db, params) {
-  const idTamu = params.id_tamu;
-  const qrHash = params.qr_hash;
+  const idTamu = sanitizeId(params.id_tamu);
+  const qrHash = params.qr_hash && typeof params.qr_hash === 'string' && params.qr_hash.length <= 50 ? params.qr_hash : '';
+
+  if (!idTamu && !qrHash) {
+    return { success: false, message: 'ID tamu atau QR hash diperlukan.' };
+  }
 
   let guest;
   if (idTamu) {
@@ -292,7 +340,11 @@ async function updateAdminNote(db, params, adminPin) {
   }
 
   const qrHash = params.qr_hash;
-  const note = params.catatan || '';
+  if (!qrHash || typeof qrHash !== 'string' || qrHash.length > 50) {
+    return { success: false, message: 'QR hash tidak valid.' };
+  }
+
+  const note = sanitize(params.catatan || '', 500);
 
   const guest = await get(db, 'SELECT * FROM data_tamu WHERE qr_code_hash = ?', [qrHash]);
   if (!guest) {
@@ -301,18 +353,26 @@ async function updateAdminNote(db, params, adminPin) {
 
   await run(db, 'UPDATE data_tamu SET catatan_admin = ?, updated_at = datetime(\'now\', \'localtime\') WHERE qr_code_hash = ?', [note, qrHash]);
 
+  auditLog('UPDATE_NOTE', params._ip || 'unknown', `qr=${qrHash.slice(0, 10)}...`);
+
   return { success: true, message: 'Catatan admin diperbarui.' };
 }
 
 async function addUcapan(db, params) {
-  const nama = params.nama;
-  const ucapan = params.ucapan;
+  const nama = sanitize(params.nama, 100);
+  const ucapan = sanitize(params.ucapan, 500);
 
-  if (!nama || !ucapan) {
-    return { success: false, message: 'Nama dan ucapan wajib diisi.' };
+  if (!nama || nama.length < 2) {
+    return { success: false, message: 'Nama wajib diisi (minimal 2 karakter).' };
   }
 
-  await run(db, 'INSERT INTO data_ucapan (id_tamu, nama, ucapan) VALUES (?, ?, ?)', [params.id_tamu || '', nama, ucapan]);
+  if (!ucapan || ucapan.length < 2) {
+    return { success: false, message: 'Ucapan wajib diisi (minimal 2 karakter).' };
+  }
+
+  const idTamu = sanitizeId(params.id_tamu || '');
+
+  await run(db, 'INSERT INTO data_ucapan (id_tamu, nama, ucapan) VALUES (?, ?, ?)', [idTamu, nama, ucapan]);
 
   return { success: true, message: 'Ucapan berhasil dikirim.' };
 }
@@ -327,11 +387,11 @@ function verifyPin(params, adminPin) {
 }
 
 function parseIds(raw) {
-  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw)) return raw.map(id => sanitizeId(id)).filter(Boolean);
   if (typeof raw === 'string' && raw) {
     try {
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed) ? parsed.map(id => sanitizeId(id)).filter(Boolean) : [];
     } catch (e) {
       return [];
     }
@@ -354,6 +414,8 @@ async function resetStatus(db, params, adminPin) {
     updated_at = datetime('now', 'localtime')
   WHERE 1`);
 
+  auditLog('RESET_STATUS', params._ip || 'unknown', 'all guests');
+
   return { success: true, message: 'Status semua undangan telah direset.' };
 }
 
@@ -362,8 +424,8 @@ async function deleteGuest(db, params, adminPin) {
     return { success: false, message: 'PIN admin tidak valid.' };
   }
 
-  const idTamu = params.id_tamu || '';
-  const qrHash = params.qr_hash || '';
+  const idTamu = sanitizeId(params.id_tamu || '');
+  const qrHash = params.qr_hash && typeof params.qr_hash === 'string' && params.qr_hash.length <= 50 ? params.qr_hash : '';
   if (!idTamu && !qrHash) {
     return { success: false, message: 'ID tamu atau QR hash wajib diisi.' };
   }
@@ -372,9 +434,11 @@ async function deleteGuest(db, params, adminPin) {
   if (idTamu) {
     const r = await run(db, 'DELETE FROM data_tamu WHERE id_tamu = ?', [idTamu]);
     deleted = r.changes;
+    auditLog('DELETE_GUEST', params._ip || 'unknown', `id=${idTamu}`);
   } else {
     const r = await run(db, 'DELETE FROM data_tamu WHERE qr_code_hash = ?', [qrHash]);
     deleted = r.changes;
+    auditLog('DELETE_GUEST', params._ip || 'unknown', `qr=${qrHash.slice(0, 10)}...`);
   }
 
   if (deleted === 0) {
@@ -399,6 +463,8 @@ async function deleteGuests(db, params, adminPin) {
     total += r.changes;
   }
 
+  auditLog('DELETE_GUESTS', params._ip || 'unknown', `count=${total}`);
+
   return { success: true, message: `${total} undangan berhasil dihapus.`, deleted: total };
 }
 
@@ -408,6 +474,7 @@ async function deleteAllGuests(db, params, adminPin) {
   }
 
   const r = await run(db, 'DELETE FROM data_tamu WHERE 1');
+  auditLog('DELETE_ALL', params._ip || 'unknown', `count=${r.changes}`);
   return { success: true, message: 'Semua undangan telah dihapus.', deleted: r.changes };
 }
 
@@ -419,7 +486,7 @@ function verifyAdmin(params, adminPin) {
   return { success: false, message: 'PIN tidak valid.' };
 }
 
-function registerRoutes(app, db) {
+function registerRoutes(app, db, adminLimiter) {
   const ADMIN_PIN = process.env.ADMIN_PIN || '202608';
 
   app.get('/', (req, res) => {
@@ -428,7 +495,7 @@ function registerRoutes(app, db) {
       return res.json({ success: true, message: 'ENVITATION SQLite Backend is running.' });
     }
 
-    handleGetRequest(req, res, db, ADMIN_PIN);
+    handleGetRequest(req, res, db, ADMIN_PIN, adminLimiter);
   });
 
   app.post('/', (req, res) => {
@@ -436,8 +503,20 @@ function registerRoutes(app, db) {
   });
 }
 
-async function handleGetRequest(req, res, db, ADMIN_PIN) {
+async function handleGetRequest(req, res, db, ADMIN_PIN, adminLimiter) {
   const action = req.query.action || '';
+
+  const adminActions = ['search', 'verifyAdmin'];
+  if (adminActions.includes(action)) {
+    adminLimiter(req, res, async () => {
+      await processGetAction(req, res, db, ADMIN_PIN, action);
+    });
+  } else {
+    await processGetAction(req, res, db, ADMIN_PIN, action);
+  }
+}
+
+async function processGetAction(req, res, db, ADMIN_PIN, action) {
   let result;
 
   try {
@@ -446,7 +525,7 @@ async function handleGetRequest(req, res, db, ADMIN_PIN) {
         result = await verifyGuest(db, req.query);
         break;
       case 'search':
-        result = await searchGuests(db, req.query);
+        result = await searchGuests(db, req.query, ADMIN_PIN);
         break;
       case 'stats':
         result = await getStats(db);
@@ -461,10 +540,11 @@ async function handleGetRequest(req, res, db, ADMIN_PIN) {
         result = await getUcapan(db);
         break;
       default:
-        result = { success: false, message: 'Action tidak dikenali: ' + action };
+        result = { success: false, message: 'Action tidak dikenali.' };
     }
   } catch (err) {
-    result = { success: false, message: 'Error: ' + err.toString() };
+    console.error(`[ERROR] GET ${action}:`, err.message);
+    result = { success: false, message: 'Terjadi kesalahan pada server.' };
   }
 
   res.json(result);
@@ -473,6 +553,9 @@ async function handleGetRequest(req, res, db, ADMIN_PIN) {
 async function handlePostRequest(req, res, db, ADMIN_PIN) {
   const action = req.body.action || '';
   let result;
+
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+  req.body._ip = ip;
 
   try {
     switch (action) {
@@ -513,10 +596,11 @@ async function handlePostRequest(req, res, db, ADMIN_PIN) {
         result = await addUcapan(db, req.body);
         break;
       default:
-        result = { success: false, message: 'Action tidak dikenali: ' + action };
+        result = { success: false, message: 'Action tidak dikenali.' };
     }
   } catch (err) {
-    result = { success: false, message: 'Error: ' + err.toString() };
+    console.error(`[ERROR] POST ${action}:`, err.message);
+    result = { success: false, message: 'Terjadi kesalahan pada server.' };
   }
 
   res.json(result);

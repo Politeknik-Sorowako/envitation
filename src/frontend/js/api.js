@@ -124,8 +124,9 @@ const API = {
     return this.post("checkin_return", { qr_hash: qrHash });
   },
 
-  search(query) {
-    return this.call("search", { q: query });
+  search(query, pin) {
+    if (!pin) return Promise.resolve({ success: false, message: "PIN diperlukan" });
+    return this.call("search", { q: query, pin: pin });
   },
 
   getStats() {

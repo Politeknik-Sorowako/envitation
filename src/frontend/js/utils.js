@@ -123,68 +123,14 @@ const Utils = {
     });
   },
 
-  _cloneForExport(elementId) {
-    const original = document.getElementById(elementId);
-    if (!original) return null;
-
-    const clone = original.cloneNode(true);
-    clone.style.position = "absolute";
-    clone.style.left = "-9999px";
-    clone.style.top = "0";
-    clone.style.zIndex = "-1";
-    clone.style.opacity = "1";
-    clone.style.animation = "none";
-    document.body.appendChild(clone);
-
-    const textEls = clone.querySelectorAll(".text-slate-400, .text-slate-500, .text-slate-300, .text-slate-600, #ec-guest-name");
-    textEls.forEach(el => {
-      el.style.color = "#0f172a";
-      el.style.opacity = "1";
-    });
-
-    const qrCanvas = clone.querySelector("#ec-qr-code canvas");
-    if (qrCanvas) {
-      const qrImg = document.createElement("img");
-      qrImg.src = qrCanvas.toDataURL("image/png");
-      qrImg.style.cssText = "width:100%;height:auto;display:block;position:relative;left:-440px;";
-      qrCanvas.parentNode.replaceChild(qrImg, qrCanvas);
-    }
-
-    const logoEl = clone.querySelector(".ecard-logo");
-    if (logoEl) {
-      logoEl.style.filter = "none";
-      logoEl.style.animation = "none";
-    }
-
-    return clone;
-  },
-
   _captureOptions() {
     return {
       scale: 4,
       backgroundColor: "#ffffff",
       useCORS: true,
       allowTaint: true,
-      imageSmoothingEnabled: false,
       logging: false,
     };
-  },
-
-  _captureFallback(elementId, filename, format) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-
-    html2canvas(element, this._captureOptions()).then(canvas => {
-      if (format === "png") {
-        this._savePNG(canvas, filename);
-        this.showToast("E-Card berhasil diunduh (mode fallback)!", "success");
-      } else {
-        this._savePDF(canvas, filename);
-        this.showToast("E-Card PDF berhasil diunduh (mode fallback)!", "success");
-      }
-    }).catch(() => {
-      this.showToast("Gagal mengunduh E-Card", "error");
-    });
   },
 
   _savePNG(canvas, filename) {
@@ -215,38 +161,30 @@ const Utils = {
     pdf.save(`${filename}.pdf`);
   },
 
-  async downloadAsPNG(elementId, filename = "ecard") {
-    const clone = this._cloneForExport(elementId);
-    if (!clone) return;
-
-    await new Promise(r => setTimeout(r, 500));
+  async _capture(elementId, filename, format) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
 
     try {
-      const canvas = await html2canvas(clone, this._captureOptions());
-      clone.remove();
-      this._savePNG(canvas, filename);
-      this.showToast("E-Card berhasil diunduh!", "success");
+      const canvas = await html2canvas(element, this._captureOptions());
+      if (format === "png") {
+        this._savePNG(canvas, filename);
+        this.showToast("E-Card berhasil diunduh!", "success");
+      } else {
+        this._savePDF(canvas, filename);
+        this.showToast("E-Card PDF berhasil diunduh!", "success");
+      }
     } catch (err) {
-      clone.remove();
-      this._captureFallback(elementId, filename, "png");
+      this.showToast("Gagal mengunduh E-Card", "error");
     }
   },
 
-  async downloadAsPDF(elementId, filename = "ecard") {
-    const clone = this._cloneForExport(elementId);
-    if (!clone) return;
+  downloadAsPNG(elementId, filename = "ecard") {
+    this._capture(elementId, filename, "png");
+  },
 
-    await new Promise(r => setTimeout(r, 500));
-
-    try {
-      const canvas = await html2canvas(clone, this._captureOptions());
-      clone.remove();
-      this._savePDF(canvas, filename);
-      this.showToast("E-Card PDF berhasil diunduh!", "success");
-    } catch (err) {
-      clone.remove();
-      this._captureFallback(elementId, filename, "pdf");
-    }
+  downloadAsPDF(elementId, filename = "ecard") {
+    this._capture(elementId, filename, "pdf");
   },
 
   getShareUrl(guest) {

@@ -123,16 +123,6 @@ const Utils = {
     });
   },
 
-  _captureOptions() {
-    return {
-      scale: 4,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-    };
-  },
-
   _savePNG(canvas, filename) {
     const link = document.createElement("a");
     link.download = `${filename}.png`;
@@ -165,8 +155,25 @@ const Utils = {
     const element = document.getElementById(elementId);
     if (!element) return;
 
+    element.classList.add("ecard-export");
+
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
     try {
-      const canvas = await html2canvas(element, this._captureOptions());
+      const canvas = await html2canvas(element, {
+        scale: 4,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        onclone: (doc) => {
+          doc.querySelectorAll(".ecard-export, .ecard-export *").forEach(el => {
+            el.style.opacity = "1";
+            el.style.filter = "none";
+            el.style.animation = "none";
+          });
+        },
+      });
       if (format === "png") {
         this._savePNG(canvas, filename);
         this.showToast("E-Card berhasil diunduh!", "success");
@@ -176,6 +183,8 @@ const Utils = {
       }
     } catch (err) {
       this.showToast("Gagal mengunduh E-Card", "error");
+    } finally {
+      element.classList.remove("ecard-export");
     }
   },
 

@@ -1354,3 +1354,17 @@ tr:hover {
 }
 
 /* ===== E-CARD EXPORT ===== */
+.ecard-export,
+.ecard-export * {
+  opacity: 1 !important;
+  filter: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+.ecard-export {
+  box-shadow: none !important;
+}
+.ecard-export::before,
+.ecard-export::after {
+  opacity: 1 !important;
+}

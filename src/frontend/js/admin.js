@@ -10,6 +10,9 @@ const Admin = {
   currentGuest: null,
   allGuests: [],
   sessionExpiry: 12 * 60 * 60 * 1000,
+  lastScannedHash: null,
+  lastScanTime: 0,
+  scanCooldownMs: 3000,
 
   init() {
     document.getElementById("sidebar-event-subjek").textContent = CONFIG.EVENT.subjek;
@@ -294,6 +297,14 @@ const Admin = {
 
   async onScanSuccess(qrHash) {
     if (!this.scanning) return;
+
+    const now = Date.now();
+    if (qrHash === this.lastScannedHash && now - this.lastScanTime < this.scanCooldownMs) {
+      return;
+    }
+
+    this.lastScannedHash = qrHash;
+    this.lastScanTime = now;
 
     let result;
     switch (this.scannerMode) {

@@ -23,7 +23,7 @@
         <p class="text-slate-500 text-sm mt-1">Masukkan PIN untuk melanjutkan</p>
       </div>
       <div class="mb-4">
-        <input type="password" id="admin-pin" class="form-input text-center text-2xl tracking-widest" maxlength="6" placeholder="••••••" onkeypress="if(event.key==='Enter')Admin.login()">
+        <input type="password" id="admin-pin" class="form-input text-center text-2xl tracking-widest" maxlength="30" placeholder="••••••••••••••" onkeypress="if(event.key==='Enter')Admin.login()">
       </div>
       <button class="btn btn-accent w-full" onclick="Admin.login()">Masuk</button>
       <p id="login-error" class="text-red-500 text-sm text-center mt-3 hidden">PIN tidak valid</p>

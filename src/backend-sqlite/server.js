@@ -20,6 +20,8 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+app.set('trust proxy', true);
+
 app.use(cors({
   origin: ALLOWED_ORIGIN,
   methods: ['GET', 'POST'],

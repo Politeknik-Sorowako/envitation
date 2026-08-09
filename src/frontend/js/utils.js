@@ -146,7 +146,7 @@ const Utils = {
     if (qrCanvas) {
       const qrImg = document.createElement("img");
       qrImg.src = qrCanvas.toDataURL("image/png");
-      qrImg.style.cssText = "width:100%;height:100%;display:block;";
+      qrImg.style.cssText = "width:100%;height:auto;display:block;";
       qrCanvas.parentNode.replaceChild(qrImg, qrCanvas);
     }
 

@@ -307,8 +307,8 @@ h1, h2, h3, h4, h5, h6 {
 .ecard-qr canvas,
 .ecard-qr img {
   width: 100% !important;
-  height: 100% !important;
-  vertical-align: top;
+  height: auto !important;
+  display: block;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
@@ -320,6 +320,8 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  min-height: 0;
 }
 
 .ecard-status {

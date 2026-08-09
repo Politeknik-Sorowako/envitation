@@ -45,7 +45,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
 }
 
 /* ===== ANIMATIONS ===== */
@@ -234,7 +234,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .countdown-number {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
   font-size: 2.25rem;
   font-weight: 700;
   color: var(--accent-light);
@@ -473,7 +473,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stat-number {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
   font-size: 2rem;
   font-weight: 700;
   color: var(--primary);
@@ -862,7 +862,7 @@ tr:hover {
 }
 
 .admin-sidebar-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
   text-align: center;
@@ -966,7 +966,7 @@ tr:hover {
 }
 
 .admin-header-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
 }
@@ -1077,7 +1077,7 @@ tr:hover {
 }
 
 .modal-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
 }
@@ -1202,7 +1202,7 @@ tr:hover {
 }
 
 .section-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Playfair Display', sans-serif;
   font-size: 1.75rem;
   font-weight: 700;
   text-align: center;
